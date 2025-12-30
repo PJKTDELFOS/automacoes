@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 from datetime import datetime,timedelta
 from openpyxl import load_workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Font, PatternFill, Alignment
 import re
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -17,11 +17,11 @@ from keys import KEYS
 def envio_de_email(arquivo_anexo):
     meu_email='boletinlicitacao@gmail.com'
     minha_senha=KEYS.senha
-    email_destinho='albert.franca1992@gmail.com'
+    email_destino='albert.franca1992@gmail.com'
 
     msg=MIMEMultipart()
     msg['From']=meu_email
-    msg['To']=email_destinho
+    msg['To']=email_destino
     msg['Subject']=f'Cronograma diario PNCP-{datetime.now().strftime("%d/%m/%Y")}'
     corpo='Ola,\nSegue em anexo o cronograma de licitaçõe extraido do PNCP'
     msg.attach(MIMEBase('text', 'plain'))
@@ -37,9 +37,9 @@ def envio_de_email(arquivo_anexo):
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(meu_email, minha_senha)
-        server.sendmail(meu_email, email_destinho, msg.as_string())
+        server.sendmail(meu_email, email_destino, msg.as_string())
         server.quit()
-        print(f'Email enviado com sucesso! para {email_destinho}')
+        print(f'Email enviado com sucesso! para {email_destino}')
     except Exception as e:
         print(f"Erro ao enviar e-mail: {e}")
 
@@ -140,10 +140,6 @@ def cronograma():
                     break
             if not cor_localizada:
                 modalidade_celula.fill = preenchimento_padrao
-
-
-
-
         ws.column_dimensions['A'].width = 18  # Data
         ws.column_dimensions['B'].width = 15  # Número
         ws.column_dimensions['C'].width = 25  # Modalidade
@@ -151,9 +147,6 @@ def cronograma():
         ws.column_dimensions['E'].width = 60  # Objeto
         ws.column_dimensions['F'].width = 12  # UASG
         wb.save(nome_completo_arquivo)
-
-
-
         print(f'\nSucesso! {len(df)} licitações filtradas encontradas.')
         print(f"Sucesso! Cronograma formatado em {nome_completo_arquivo}")
         envio_de_email(nome_completo_arquivo)
