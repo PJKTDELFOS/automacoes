@@ -142,10 +142,11 @@ class BaseMonitor(ABC):
         nome_base=os.path.basename(self.nome_arquivo)
 
         with open(self.nome_arquivo, 'rb') as arquivo:
+            payload=arquivo.read()
             part = MIMEBase('application', 'octet-stream')
             part.set_payload(arquivo.read())
             encoders.encode_base64(part)
-            part.add_header('Content-Disposition', f"attachment; filename= {nome_base}")
+            part.add_header('Content-Disposition', f'attachment; filename= "{nome_base}"')
             msg.attach(part)
         try:
             server = smtplib.SMTP('smtp.gmail.com', 587)
