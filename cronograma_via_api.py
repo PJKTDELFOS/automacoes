@@ -95,7 +95,7 @@ def cronograma():
                                 'NUMERO': f"{item.get('numeroCompra')}/{item.get('anoCompra')}",  # [cite: 504]
                                 'MODALIDADE': item.get('modalidadeNome', ''),  # [cite: 507]
                                 'ORGAO': item.get('orgaoEntidade', {}).get('razaoSocial', ''),  # [cite: 509]
-                                'OBJETO': objeto_limpo.upper(),  # [cite: 507]
+                                'OBJETO': objeto_limpo.upper()+''+'',  # [cite: 507]
                                 'UASG': unidade.get('codigoUnidade', "")  # [cite: 509]
                             }
                             lista_final_filtrada.append(registro)
