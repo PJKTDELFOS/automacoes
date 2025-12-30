@@ -88,7 +88,7 @@ def cronograma():
                     data_fim_str = item.get('dataEncerramentoProposta')
                     if data_fim_str:
                         data_fim=datetime.fromisoformat(data_fim_str.replace('Z','').split('.')[0])
-                        if data_fim>hoje:
+                        if data_fim>=hoje:
                             unidade = item.get('unidadeOrgao', {})or {}
                             registro = {
                                 'DATA': data_fim.strftime('%d/%m/%Y %H:%M'),  # [cite: 507]
