@@ -14,6 +14,8 @@ class DBManager:
             "host":os.getenv("DB_HOST"),
             "port":os.getenv("DB_PORT"),
         }
+        if not all(self.conn_params.values()):
+            raise EnvironmentError("DATABASE NOT SET")
     def get_connection(self):
         return psycopg2.connect(**self.conn_params)
 

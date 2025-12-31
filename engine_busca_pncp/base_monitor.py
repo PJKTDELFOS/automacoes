@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 from engine_busca_pncp.db_manager import DBManager
 from textwrap import dedent
 import time
+import unicodedata
 
 
 class BaseMonitor(ABC):
@@ -110,6 +111,7 @@ class BaseMonitor(ABC):
     @property
     def nome_arquivo(self):
         cliente_limpo=self.cliente.replace(' ','_')
+        cliente_limpo = unicodedata.normalize('NFKD', cliente_limpo).encode('ASCII', 'ignore').decode('ASCII')
         data_str=self.hoje.strftime("%d_%m_%Y")
         nomearquivo=f'cronograma_{cliente_limpo}_{data_str}.xlsx'
         return nomearquivo
@@ -144,9 +146,9 @@ class BaseMonitor(ABC):
         with open(self.nome_arquivo, 'rb') as arquivo:
             payload=arquivo.read()
             part = MIMEBase('application', 'octet-stream')
-            part.set_payload(arquivo.read())
+            part.set_payload(payload)
             encoders.encode_base64(part)
-            part.add_header('Content-Disposition', f'attachment; filename= "{nome_base}"')
+            part.add_header('Content-Disposition', f'attachment; filename="{nome_base}"')
             msg.attach(part)
         try:
             server = smtplib.SMTP('smtp.gmail.com', 587)

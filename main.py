@@ -10,10 +10,9 @@ def envios():
             'nome':'Efata Eventos',
             'email':'albert.franca1992@gmail.com',
             'palavras':[
-                'eventos', 'buffet', 'coffee break', 'sonorizacao',
-                'iluminacao', 'palco', 'decoracao', 'ornamentacao'
+                'encanamentos','concreto'
             ],
-            'uf':'RJ'
+            'uf':'PA'
         },
         #CLIENTE2
         {
@@ -21,10 +20,9 @@ def envios():
             'nome': 'nr alimentação',
             'email': 'profissional.albert@gmail.com',
             'palavras': [
-                'refeicoes prontas', 'quentinhas', 'generos alimenticios',
-                'marmitex', 'fornecimento de refeicao', 'hortifrutigranjeiros'
+                'peças','automotivas'
             ],
-            'uf': 'MG'
+            'uf': 'MA'
         },
         #CLIENTE 3
         {
@@ -32,10 +30,9 @@ def envios():
             'nome': 'GEMAQ',
             'email': 'orofissional.albert@gmail.com',
             'palavras': [
-                'locacao de maquinas', 'caminhoes', 'maquinario pesado',
-                'retroescavadeira', 'patrol', 'construcao civil', 'trator'
+                'fogos','eventos'
             ],
-            'uf': 'BA'
+            'uf': 'PR'
         },
 
 
