@@ -97,8 +97,8 @@ class BaseMonitor(ABC):
         msg['To'] = email_destinho
         msg['Subject'] = f'Cronograma diario PNCP-{datetime.now().strftime("%d/%m/%Y")}'
         corpo = self.mensagem
-        msg.attach(MIMEText(corpo, 'plain'))
-        nome_base=os.path.basename(self.nome_arquivo)
+        msg.attach(MIMEText(corpo, 'html'))
+        # nome_base=os.path.basename(self.nome_arquivo)
 
         try:
             part=MIMEBase('application', 'octet-stream')
@@ -156,7 +156,10 @@ class BaseMonitor(ABC):
     @property
     def mensagem(self):
         quantidade = len(self.dados_filtrados)
+        dia=datetime.now()
+        dia_do_mes = datetime.now().strftime('%d/%m/%Y')
         hora_dia = datetime.now().hour
+        minuto=dia.minute
         termos_str = ", ".join([t.upper() for t in self.palavras_chave])
         saudacao = None
         if hora_dia >= 18:
@@ -166,24 +169,61 @@ class BaseMonitor(ABC):
         elif hora_dia < 12:
             saudacao = 'Bom dia'
 
-        corpo = f"""
-                    {saudacao},
 
-                    Este é o seu relatório diário de monitoramento do PNCP para o cliente **{self.cliente}**.
+        cor_primaria = "#2c3e50"
+        cor_destaque = "#3498db"
+        html = f"""
+            <html>
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
+                <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: {cor_primaria}; color: white; padding: 20px; text-align: center;">
+                        <h1 style="margin: 0; font-size: 20px;">Relatório de Oportunidades PNCP</h1>
+                        <p style="margin: 5px 0 0 0; opacity: 0.8;">Monitoramento Inteligente de Licitações</p>
+                    </div>
 
-                    **Resumo da rodada:**
-                    - **Data:** {self.hoje.strftime('%d/%m/%Y')}
-                    - **Filtro Geográfico:** {self.uf if self.uf else 'Nacional'}
-                    - **Novas oportunidades encontradas:** {quantidade}
-                    - **Termos monitorados:** {termos_str}
+                    <div style="padding: 20px;">
+                        <p>Olá, <strong>{self.cliente}</strong>,</p>
+                        <p>Identificamos novas oportunidades no PNCP que coincidem com o seu perfil de busca.</p>
 
-                    Em anexo, você encontrará a planilha detalhada com os links diretos para os certames e prazos de entrega de proposta.
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #f9f9f9;">
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Hora envio:</strong></td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">{hora_dia}:{minuto}</td>
+                            </tr>
+                             <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Data:</strong></td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">{dia_do_mes}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Oportunidades:</strong></td>
+                                <td style="padding: 10px; border: 1px solid #ddd; color: {cor_destaque}; font-weight: bold;">{quantidade} encontradas</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Filtro:</strong></td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">{self.uf if self.uf else 'Brasil (Nacional)'}</td>
+                            </tr>
+                        </table>
 
-                    ---
-                    *Este é um e-mail automático enviado pelo seu Sistema de Monitoramento de Licitações.*
-                    """
+                        <p style="font-size: 14px;"><strong>Termos monitorados nesta rodada:</strong><br>
+                        <span style="color: #666;">{termos_str}</span></p>
 
-        return dedent(corpo)
+                        <div style="background-color: #fff3cd; border-left: 5px solid #ffecb5; padding: 15px; margin: 20px 0;">
+                            <p style="margin: 0; font-size: 14px; color: #856404;">
+                                <strong>Importante:</strong> Os detalhes completos, prazos e links diretos estão disponíveis na planilha em anexo.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #999;">
+                        <p style="margin: 0;">Este é um serviço automatizado. Por favor, não responda a este e-mail.</p>
+                        <p style="margin: 5px 0 0 0;">&copy; 2026 Seu Sistema de Monitoramento</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+        return  html #dedent(corpo)
 
     @abstractmethod
     def filtros(self, dados_brutos):

@@ -9,15 +9,15 @@ def envios():
     print("\n" + "=" * 60)
     print("      SISTEMA DE MONITORAMENTO PNCP - PIPELINE INTEGRADO")
     print("=" * 60)
-    try:
-        print("\n[1/2] Iniciando Coleta Centralizada (Cache)...")
-        coletor=ColetorCentral(dias_padrao=6)
-        coletor.coleta_diaria()
-    except Exception as e:
-        print(f"[!] Erro crítico na coleta: {e}")
-        print("[i] Tentando prosseguir com os dados já existentes no banco...")
-
-    print("\n[2/2] Iniciando processamento dos robôs clientes...")
+    # try:
+    #     print("\n[1/2] Iniciando Coleta Centralizada (Cache)...")
+    #     coletor=ColetorCentral(dias_padrao=6)
+    #     coletor.coleta_diaria()
+    # except Exception as e:
+    #     print(f"[!] Erro crítico na coleta: {e}")
+    #     print("[i] Tentando prosseguir com os dados já existentes no banco...")
+    #
+    # print("\n[2/2] Iniciando processamento dos robôs clientes...")
 
     lista_de_clientes=[
         #CLIENTE 1
@@ -26,9 +26,9 @@ def envios():
             'nome':'Cliente A',
             'email':'albert.franca1992@gmail.com',
             'palavras':[
-                'encanamentos','concreto'
+                'fogos','eventos'
             ],
-            'uf':'PA'
+            'uf':'SP'
         },
         #CLIENTE2
         {
@@ -36,9 +36,9 @@ def envios():
             'nome': 'Cliente B',
             'email': 'profissional.albert@gmail.com',
             'palavras': [
-                'peças','automotivas'
+                'fogos','eventos'
             ],
-            'uf': 'MA'
+            'uf': 'SP'
         },
         #CLIENTE 3
         {
@@ -48,7 +48,16 @@ def envios():
             'palavras': [
                 'fogos','eventos'
             ],
-            'uf': 'PR'
+            'uf': 'SP'
+        },
+        {
+            'classe': MonitorClientes,
+            'nome': 'Cliente D',
+            'email': 'albert-franca@hotmail.com',
+            'palavras': [
+                'fogos', 'eventos'
+            ],
+            'uf': 'MG'
         },
 
 
@@ -63,6 +72,7 @@ def envios():
                 email_destino=conf['email'],
                 uf=conf['uf']
             )
+            print(f'enviando email para o cliente{lista_de_clientes[i]['nome']}')
             robo.executar()
 
             if i<len(lista_de_clientes)-1:

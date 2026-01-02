@@ -46,6 +46,6 @@ class DBManager:
                         querry,
                         (identificador,cliente)
                     )
-                    connection.commit()
+                connection.commit()
         except Exception as e:
             print(f' erro ao consultar DB {e}')
