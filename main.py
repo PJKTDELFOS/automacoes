@@ -1,4 +1,4 @@
-from clientes.efata import ClientesEfataEventos
+from clientes.clientes import ClientesEfataEventos
 from datetime import datetime
 import time
 

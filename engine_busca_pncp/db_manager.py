@@ -16,6 +16,7 @@ class DBManager:
         }
         if not all(self.conn_params.values()):
             raise EnvironmentError("DATABASE NOT SET")
+
     def get_connection(self):
         return psycopg2.connect(**self.conn_params)
 
@@ -30,7 +31,7 @@ class DBManager:
                     return cursor.fetchone() is not None
         except Exception as e:
             print(f' erro ao consultar DB {e}')
-            return False
+            return True
 
     def registro_envio(self,identificador,cliente):
         querry="""INSERT INTO public.historico_licitacoes (identificador_pncp, cliente) VALUES (%s, %s)

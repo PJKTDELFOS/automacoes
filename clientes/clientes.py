@@ -10,45 +10,45 @@ from engine_busca_pncp.base_monitor import BaseMonitor
 
 
 
-class ClientesEfataEventos(BaseMonitor):
+class MonitorClientes(BaseMonitor):
     def filtros(self,dados_brutos):
         self.dados_filtrados=[]
-        self.ids_a_registrar=[]
-
+        lista_temp=[]
         for item in dados_brutos:
-            if self.verificar_duplicidade(item):
-                continue
             objeto=item.get('objetoCompra','') or ""
-            objeto_limpo=re.sub(r'[\x00-\x1F\x7F]', '', objeto)
-            if any(palavra in objeto_limpo.lower() for palavra in self.palavras_chave):
-                data_fim_str=item.get('dataEncerramentoProposta','')
-                if data_fim_str:
-                    data_fim=datetime.fromisoformat(data_fim_str.replace('Z','').split('.')[0])
-                    if data_fim>=self.hoje:
-                        unidade = item.get('unidadeOrgao', {}) or {}
-                        registro = {
-                            'DATA': data_fim.strftime('%d/%m/%Y %H:%M'),  # [cite: 507]
-                            'NUMERO': f"{item.get('numeroCompra')}/{item.get('anoCompra')}",  # [cite: 504]
-                            'MODALIDADE': item.get('modalidadeNome', ''),  # [cite: 507]
-                            'ORGAO': item.get('orgaoEntidade', {}).get('razaoSocial', ''),  # [cite: 509]
-                            'OBJETO': objeto_limpo.upper() + '' + '',  # [cite: 507]
-                            'UASG': unidade.get('codigoUnidade', "")  # [cite: 509]
-                        }
-                        self.dados_filtrados.append(registro)
-                        self.ids_a_registrar.append(self.gerar_id_unico(item))
+            objeto_limpo = re.sub(r'[\x00-\x1F\x7F]', '', objeto).strip().upper()
+            data_fim_str=item.get('dataEncerramentoProposta','')
+            data_ordenacao = datetime(2099, 1, 1)
+            if data_fim_str:
+                try:
+                    data_fim=datetime.fromisoformat(data_fim_str.replace('Z', '').split('.')[0])
+                    data_formatada=data_fim.strftime('%d/%m/%Y %H:%M')
+                    data_ordenacao=data_fim
+                except:
+                    data_formatada = 'NA'
+            else:
+                data_formatada='NA'
+            registro = {
+                'DATA': data_formatada,
+                'DATA_DT':data_ordenacao,
+                'NUMERO': f"{item.get('numeroCompra')}/{item.get('anoCompra')}",
+                'MODALIDADE': item.get('modalidadeNome', '').upper(),
+                'ORGAO': item.get('orgaoEntidade', {}).get('razaoSocial', '').upper(),
+                'OBJETO': objeto_limpo,
+                'UASG': item.get('unidadeOrgao', {}).get('codigoUnidade', "")
+            }
+            lista_temp.append(registro)
+        lista_temp.sort(key=lambda x: x['DATA_DT'])
+        for r in lista_temp:
+            del r['DATA_DT']
+            self.dados_filtrados.append(r)
 
 
     def gerar_planilha(self):
         if not super().gerar_planilha():
             return False
         try:
-            df = pd.DataFrame(self.dados_filtrados.copy())
-            if not df.empty:
-                df['DATA_OBJ'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y %H:%M')
-                df = df.sort_values(by='DATA_OBJ', ascending=True)
-                df = df.drop(columns=['DATA_OBJ'])
-                df = df[['DATA', 'NUMERO', 'MODALIDADE', 'ORGAO', 'OBJETO', 'UASG']]
-                df.to_excel(self.nome_arquivo, index=False)
+
             wb = load_workbook(self.nome_arquivo)
             ws = wb.active
             cores_modalidades = {

@@ -1,5 +1,5 @@
+import json
 from email.mime.text import MIMEText
-import requests
 import pandas as pd
 from datetime import datetime,timedelta
 import smtplib
@@ -10,10 +10,9 @@ import os
 from keys import KEYS
 from abc import ABC, abstractmethod
 from engine_busca_pncp.db_manager import DBManager
+from engine_busca_pncp.log_manager import LogManager
 from textwrap import dedent
-import time
 import unicodedata
-
 
 class BaseMonitor(ABC):
 
@@ -23,24 +22,53 @@ class BaseMonitor(ABC):
         self.email_destino = email_destino
         self.hoje=datetime.now()
         self.dados_filtrados=[]
+        self.ids_a_registrar=[]
         self.uf=uf if uf else ''
         self.db=DBManager()
+        self.logger=LogManager(self.db)
 
 
-    def gerar_id_unico(self,item):
-        cnpj = item.get('orgaoEntidade', {}).get('cnpj', '00000000000000')
-        ano = item.get('anoCompra', '')
-        numero = item.get('numeroCompra', '')
-        identificador = f'{cnpj}_{ano}_{numero}'
-        return identificador
 
-    def verificar_duplicidade(self,item):
+    def busca_db_central(self):
+        condicoes=' OR '.join(
+            ["objeto ILIKE %s" for _ in self.palavras_chave]
+        )
+        query=f'SELECT identificador_certame,dados_json from public.pncp_dados_brutos where {condicoes} '
+        params=[
+            f'%{p}%' for p in self.palavras_chave
+        ]
+        if self.uf:
+            query+=' AND uf = %s'
+            params.append(self.uf)
         try:
-            identificador = self.gerar_id_unico(item)
-            return self.db.ja_enviado(identificador,self.cliente)
+            with self.db.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, tuple(params))
+                    rows=cursor.fetchall()
+                    return[
+                        (r[0],r[1]) for r in rows
+                    ]
+
         except Exception as e:
-            print(f"[{self.cliente}] Erro ao verificar duplicidade: {e}")
-            return False
+            self.logger.registro(
+                self.cliente,
+                "DB_CACHE",
+                "ERROR",
+                "READ_CACHE_ERR",
+                "Falha ao ler cache central",
+                e
+
+            )
+            return []
+    def filtrar_novidades(self,resultados_cache):
+        self.dados_filtrados=[]
+        self.ids_a_registrar=[]
+        for id_hash,dados_json in resultados_cache:
+            if not self.db.ja_enviado(id_hash,self.cliente):
+                item=dados_json if isinstance(dados_json,dict) else json.loads(dados_json)
+                self.dados_filtrados.append(item)
+                self.ids_a_registrar.append(id_hash)
+
     @property
     def mensagem(self):
         quantidade=len(self.dados_filtrados)
@@ -71,39 +99,8 @@ class BaseMonitor(ABC):
                 *Este é um e-mail automático enviado pelo seu Sistema de Monitoramento de Licitações.*
                 """
 
-
-
         return dedent(corpo)
 
-
-    def busca_na_api(self,dias_futuros=15):
-        pagina_atual = 1
-        total_paginas = 1
-        data_limite=self.hoje+timedelta(days=dias_futuros)
-        data_final_api = data_limite.strftime("%Y%m%d")
-
-        headers = {
-            'accept': 'application/json',
-            "User-Agent": "Mozilla/5.0"
-        }
-        base_url = "https://pncp.gov.br/api/consulta"
-        endpoint = f"{base_url}/v1/contratacoes/proposta"
-        dados_brutos=[]
-        while pagina_atual <= total_paginas:
-            params = {
-                'dataFinal': data_final_api,
-                'uf': self.uf,  # paga pesquisas a nivel nacional so apagar o # do lado da uf
-                'pagina': pagina_atual,
-                'tamanhoPagina': 50,  # ajuste do tamanho da pagina, so vai ate 50
-            }
-            print(f' {self.cliente} consultando a pagina {pagina_atual}')
-            response=requests.get(endpoint,params=params, headers=headers)
-            response.raise_for_status()
-            dados_json = response.json()
-            total_paginas = dados_json.get('totalPaginas', 1)
-            dados_brutos.extend(dados_json.get('data',[]))
-            pagina_atual += 1
-        return dados_brutos
     @abstractmethod
     def filtros(self,dados_brutos):
         pass
@@ -117,7 +114,7 @@ class BaseMonitor(ABC):
         return nomearquivo
 
 
-    @abstractmethod
+
     def gerar_planilha(self):
         if not self.dados_filtrados:
             return False
@@ -162,46 +159,32 @@ class BaseMonitor(ABC):
             
             
     def executar(self):
-        self.ids_a_registrar=[]
-        self.dados_filtrados=[]
-        print(f"\n" +"="*50)
-        print(F"INICIANDO MONITORAMENTO :{self.cliente}")
-        print("="*50)
-
         try:
-            brutos=self.busca_na_api()
-            self.filtros(brutos)
-
-
-            if len(self.dados_filtrados)>0:
-                print(f" [+] SUCESSO: {len(self.dados_filtrados)} certames encontrados.")
-
-                if self.gerar_planilha():
-                    print(f" [+] PLANILHA GERADA: {self.nome_arquivo}")
-                    print(" [!] Aguardando liberação do sistema de arquivos...")
-                    time.sleep(2)
+            dados_brutos=self.busca_db_central()
+            self.filtrar_novidades(dados_brutos)
+            if not self.dados_filtrados:
+                self.logger.registro(self.cliente,"FILTRO", "INFO",
+                                     "EMPTY", "Nenhuma novidade encontrada.")
+                return
+            if self.gerar_planilha():
+                try:
                     self.enviar()
-                    for id_licitacao in self.ids_a_registrar:
-                        self.db.registro_envio(id_licitacao, self.cliente)
-                    print(f" [+] {len(self.ids_a_registrar)} novos registros salvos no DB.")
-                    print(f" [+] FLUXO DE ENVIO CONCLUÍDO.")
-                else:
-                    print(f" [!] ALERTA: Falha ao gerar a planilha para {self.cliente}.")
-            else:
-                print(f'{self.cliente} : Nenhuma oportunidade encontrada para os filtros')
-        except requests.exceptions.RequestException as e:
-            print(
-                f'{self.cliente}: erro de conexão, não foi possivel acessar o PNCP, detalhes {e}'
-            )
-        except Exception as e:
-            print(
-                f'{self.cliente} Erro inesperado {e}'
-            )
+                    for id_hash in self.ids_a_registrar:
+                        self.db.registro_envio(id_hash,self.cliente)
+                    self.logger.registro(self.cliente,"EMAIL",
+                                         "SUCCESS", "SENT",
+                                         f"Enviado: {len(self.dados_filtrados)} itens.")
+                except Exception as e_envio:
+                    self.logger.registro(self.cliente,"EMAIL", "ERROR", "SMTP_FAIL", "Falha no disparo", e_envio)
+
+
+        except Exception as e_geral:
+            self.logger.registro(self.cliente, "SISTEMA", "CRITICAL", "FLOW_ERR", "Erro no fluxo principal", e_geral)
         finally:
-            print(f' Finalizado {self.cliente}')
-            print("="*50)
-
-
+            if hasattr(
+                self, 'nome_arquivo'
+            ) and os.path.exists(self.nome_arquivo):
+                os.remove(self.nome_arquivo)
 
 
 
