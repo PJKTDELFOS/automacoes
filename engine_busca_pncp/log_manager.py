@@ -13,7 +13,7 @@ class LogManager:
             stack_trace=traceback.format_exc()
 
             query='''
-            INSERT INTO public.logs_bot_pncp(cliente,etapa,nivel,codigo,mensagem,stack_trace)
+            INSERT INTO public.logs_bot_pncp(cliente,etapa,nivel,codigo_erro,mensagem,stack_trace)
             VALUES(%s,%s,%s,%s,%s,%s)
             '''
             try:

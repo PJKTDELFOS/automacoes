@@ -1,13 +1,29 @@
-from clientes.clientes import ClientesEfataEventos
+from clientes.clientes import MonitorClientes
 from datetime import datetime
 import time
 
+from engine_busca_pncp.coletor_central import ColetorCentral
+
+
 def envios():
-    clientes_config=[
+    print("\n" + "=" * 60)
+    print("      SISTEMA DE MONITORAMENTO PNCP - PIPELINE INTEGRADO")
+    print("=" * 60)
+    try:
+        print("\n[1/2] Iniciando Coleta Centralizada (Cache)...")
+        coletor=ColetorCentral(dias_padrao=6)
+        coletor.coleta_diaria()
+    except Exception as e:
+        print(f"[!] Erro crítico na coleta: {e}")
+        print("[i] Tentando prosseguir com os dados já existentes no banco...")
+
+    print("\n[2/2] Iniciando processamento dos robôs clientes...")
+
+    lista_de_clientes=[
         #CLIENTE 1
         {
-            'classe':ClientesEfataEventos,
-            'nome':'Efata Eventos',
+            'classe':MonitorClientes,
+            'nome':'Cliente A',
             'email':'albert.franca1992@gmail.com',
             'palavras':[
                 'encanamentos','concreto'
@@ -16,8 +32,8 @@ def envios():
         },
         #CLIENTE2
         {
-            'classe': ClientesEfataEventos,
-            'nome': 'nr alimentação',
+            'classe': MonitorClientes,
+            'nome': 'Cliente B',
             'email': 'profissional.albert@gmail.com',
             'palavras': [
                 'peças','automotivas'
@@ -26,8 +42,8 @@ def envios():
         },
         #CLIENTE 3
         {
-            'classe': ClientesEfataEventos,
-            'nome': 'GEMAQ',
+            'classe': MonitorClientes,
+            'nome': 'Cliente C',
             'email': 'orofissional.albert@gmail.com',
             'palavras': [
                 'fogos','eventos'
@@ -39,7 +55,7 @@ def envios():
     ]
     print(f"\nIniciando bateria de testes em {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print("-" * 50)
-    for i, conf in enumerate(clientes_config):
+    for i, conf in enumerate(lista_de_clientes):
         try:
             robo=conf['classe'](
                 cliente=conf['nome'],
@@ -49,15 +65,15 @@ def envios():
             )
             robo.executar()
 
-            if i<len(clientes_config)-1:
+            if i<len(lista_de_clientes)-1:
                 segundos_espera=30
                 print(f"Aguardando {segundos_espera} segundos para o próximo cliente (Segurança Anti-Spam)...")
                 time.sleep(segundos_espera)
         except Exception as e:
             print(f"Erro crítico ao processar cliente {conf['nome']}: {e}")
             continue
-        print("-" * 50)
-        print("Bateria de testes finalizada com sucesso!")
+    print("-" * 50)
+    print("Bateria de testes finalizada com sucesso!")
 
 
 

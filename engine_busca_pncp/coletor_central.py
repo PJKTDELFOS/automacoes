@@ -27,12 +27,13 @@ class ColetorCentral:
         dias=dias_futuros if dias_futuros is not None else self.dias_coleta
         data_limite = hoje +  timedelta(days=dias)
         data_final_api = data_limite.strftime("%Y%m%d")
+        data_para_exibir=data_limite.strftime("%d/%m/%Y")
         headers = {
             'accept': 'application/json',
             "User-Agent": "Mozilla/5.0"
         }
 
-        print(f"[*] Iniciando coleta central: {data_final_api}")
+        print(f"[*] Iniciando coleta central: {data_para_exibir}")
 
         try:
             while True:
@@ -80,16 +81,24 @@ class ColetorCentral:
         values (%s, %s, %s, %s)
         on conflict (identificador_certame) do nothing
         '''
+
         try:
             with self.db.get_connection() as connection:
                 with connection.cursor() as cursor:
-                    objeto_texto=str(
-                        item.get('objeto','').lower()
+                    uf = (
+                            item.get('unidadeOrgao', {}).get('ufSigla') or
+                            item.get('orgaoEntidade', {}).get('ufSigla') or
+                            'BR'
                     )
+                    objeto_texto = str(
+                        item.get('objetoCompra') or
+                        item.get('objeto') or
+                        ""
+                    ).lower()
                     cursor.execute(
                         sql,
                         (id_hash,
-                        item.get('uf'),
+                        uf,
                         objeto_texto,
                         json.dumps(item)
                     ))

@@ -34,7 +34,7 @@ class BaseMonitor(ABC):
         condicoes=' OR '.join(
             ["objeto ILIKE %s" for _ in self.palavras_chave]
         )
-        query=f'SELECT identificador_certame,dados_json from public.pncp_dados_brutos where {condicoes} '
+        query=f'SELECT identificador_certame,dados_json from public.pncp_dados_brutos where ({condicoes}) '
         params=[
             f'%{p}%' for p in self.palavras_chave
         ]
