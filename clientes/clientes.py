@@ -5,6 +5,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 import re
 import os
+import io
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from engine_busca_pncp.base_monitor import BaseMonitor
 
@@ -45,11 +46,12 @@ class MonitorClientes(BaseMonitor):
 
 
     def gerar_planilha(self):
-        if not super().gerar_planilha():
-            return False
+        buffer_base=super().gerar_planilha()
+        if not buffer_base:
+            return None
         try:
 
-            wb = load_workbook(self.nome_arquivo)
+            wb = load_workbook(buffer_base)
             ws = wb.active
             cores_modalidades = {
                 'TOMADA DE PREÇOS': PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid"),
@@ -88,14 +90,16 @@ class MonitorClientes(BaseMonitor):
             ws.column_dimensions['D'].width = 40  # Órgão
             ws.column_dimensions['E'].width = 60  # Objeto
             ws.column_dimensions['F'].width = 12  # UASG
-            wb.save(self.nome_arquivo)
+            final_buffer=io.BytesIO()
+            wb.save(final_buffer)
+            final_buffer.seek(0)
 
-            return True
+            return final_buffer
 
 
         except Exception as e:
-            print(f"Erro ao formatar planilha {self.cliente}: {e}")
-            return False
+            print(f"Erro na estilização em bits: {e}")
+            return None
 
 
 
