@@ -39,8 +39,14 @@ class BaseMonitor(ABC):
             f'%{p}%' for p in self.palavras_chave
         ]
         if self.uf:
-            query+=' AND uf = %s'
-            params.append(self.uf)
+            if isinstance(self.uf,list):
+                placeholders=', '.join(['%s']*len(self.uf))
+                query+=f' and uf in ({placeholders})'
+                params.extend([u.upper() for u in self.uf])
+            else:
+                query += ' AND uf = %s'
+                params.append(self.uf.upper())
+
         try:
             with self.db.get_connection() as connection:
                 with connection.cursor() as cursor:

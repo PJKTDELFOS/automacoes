@@ -18,6 +18,14 @@ def envios():
     #     print("[i] Tentando prosseguir com os dados já existentes no banco...")
     #
     # print("\n[2/2] Iniciando processamento dos robôs clientes...")
+    # regioes
+    REGIOES = {
+        'NORTE': ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO'],
+        'NORDESTE': ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE'],
+        'CENTRO_OESTE': ['DF', 'GO', 'MT', 'MS'],
+        'SUDESTE': ['ES', 'MG', 'RJ', 'SP'],
+        'SUL': ['PR', 'RS', 'SC']
+    }
 
     lista_de_clientes=[
         #CLIENTE 1
