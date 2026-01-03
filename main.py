@@ -36,7 +36,7 @@ def envios():
             'palavras':[
                 'fogos','eventos'
             ],
-            'uf':'SP'
+            'uf':REGIOES['SUDESTE']
         },
         #CLIENTE2
         {
@@ -46,7 +46,7 @@ def envios():
             'palavras': [
                 'fogos','eventos'
             ],
-            'uf': 'SP'
+            'uf': REGIOES['NORDESTE']
         },
         #CLIENTE 3
         {
@@ -56,7 +56,7 @@ def envios():
             'palavras': [
                 'fogos','eventos'
             ],
-            'uf': 'SP'
+            'uf': REGIOES['SUL']
         },
         {
             'classe': MonitorClientes,
@@ -65,7 +65,7 @@ def envios():
             'palavras': [
                 'fogos', 'eventos'
             ],
-            'uf': 'MG'
+            'uf': REGIOES['CENTRO_OESTE']
         },
 
 
