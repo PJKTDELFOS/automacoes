@@ -9,15 +9,15 @@ def envios():
     print("\n" + "=" * 60)
     print("      SISTEMA DE MONITORAMENTO PNCP - PIPELINE INTEGRADO")
     print("=" * 60)
-    # try:
-    #     print("\n[1/2] Iniciando Coleta Centralizada (Cache)...")
-    #     coletor=ColetorCentral(dias_padrao=6)
-    #     coletor.coleta_diaria()
-    # except Exception as e:
-    #     print(f"[!] Erro crítico na coleta: {e}")
-    #     print("[i] Tentando prosseguir com os dados já existentes no banco...")
-    #
-    # print("\n[2/2] Iniciando processamento dos robôs clientes...")
+    try:
+        print("\n[1/2] Iniciando Coleta Centralizada (Cache)...")
+        coletor=ColetorCentral(dias_padrao=6)
+        coletor.coleta_diaria()
+    except Exception as e:
+        print(f"[!] Erro crítico na coleta: {e}")
+        print("[i] Tentando prosseguir com os dados já existentes no banco...")
+
+    print("\n[2/2] Iniciando processamento dos robôs clientes...")
     # regioes
     REGIOES = {
         'NORTE': ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO'],
@@ -36,7 +36,7 @@ def envios():
             'palavras':[
                 'fogos','eventos'
             ],
-            'uf':REGIOES['SUDESTE']
+            'uf':REGIOES['SUDESTE'][2]
         },
         #CLIENTE2
         {
