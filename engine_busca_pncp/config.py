@@ -12,7 +12,10 @@ class Config:
     port =os.getenv("DB_PORT")
 
     RESEND_API_KEY = os.getenv('RESEND_API_KEY')
-    EMAIL_FROM = os.getenv('EMAIL_FROM')
+    EMAIL_RESEND_FROM = os.getenv('EMAIL_FROM_RESEND')
+
+    GMAIL_EMAIL_FROM=os.getenv('USER_GMAIL')
+    GMAIL_PASSWORD=os.getenv('GMAIL_KEY')
 
     DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
