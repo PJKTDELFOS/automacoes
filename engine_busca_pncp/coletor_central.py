@@ -42,7 +42,7 @@ class ColetorCentral:
 
         try:
             while True:
-                print(f"[*] Verificando página {pagina} do PNCP...")
+
                 params = {
                     'dataFinal': data_final_api,
                     'pagina': pagina,
