@@ -22,8 +22,8 @@ def envios():
     # 2. Coleta Centralizada (Cache para evitar múltiplas requisições ao PNCP)
     try:
         print("\n[1/2] Iniciando Coleta Centralizada (Cache)...")
-        coletor = ColetorCentral(dias_padrao=15)
-        coletor.coleta_diaria()
+        # coletor = ColetorCentral(dias_padrao=15)
+        # coletor.coleta_diaria()
     except Exception as e:
         print(f"[!] Erro crítico na coleta: {e}")
         print("[i] Tentando prosseguir com os dados já existentes no banco...")
@@ -44,8 +44,8 @@ def envios():
 
         {
             'classe': MonitorClientes,
-            'nome': 'Nova Rodovia 2007',
-            'email': ['comercial@nrgourmet.com.br','Gerencia@nrgourmet.com.br'],
+            'nome': 'cliente m',
+            'email': ['profissional.albert@gmail.com'],
             'palavras': [
                 'refeicao','alimentacao','catering','cafe','almoco','ceia','colacao','lanche','janta','cozinha',
                 'copeiragem','apoio','formula','hipo','proteina','terceirizacao','cozinheiro','cozinheira','generos','alimenticios'
@@ -56,8 +56,8 @@ def envios():
 
         {
             'classe': MonitorClientes,
-            'nome': 'Efata Comercio E Servicos LTDA',
-            'email': ['drrenanpontes@gmail.com'],
+            'nome': 'cliente j',
+            'email': ['albert.franca1992@gmail.com'],
             'palavras':[
     "evento", "congresso", "feira", "simposio", "seminario", "palestra", "cerimonia", "conferencia", "formatura", "show",
     "palco", "arquibancada", "camarote", "camarim", "toldo", "tenda", "confeccao", "uniforme", "vestuario", "farda",

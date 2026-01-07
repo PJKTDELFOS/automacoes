@@ -18,16 +18,33 @@ class MonitorClientes(BaseMonitor):
             objeto=item.get('objetoCompra','') or ""
             objeto_limpo = re.sub(r'[\x00-\x1F\x7F]', '', objeto).strip().upper()
             data_fim_str=item.get('dataEncerramentoProposta','')
+            agora=datetime.now()
             data_ordenacao = datetime(2099, 1, 1)
+            n_controle = item.get('numeroControlePNCP')
+            cnpj = item.get('orgaoEntidade', {}).get('cnpj')
+            cnpj_limpo = str(cnpj).replace('.', '').replace('/', '').replace('-', '')
+            ano = item.get('anoCompra')
+            sequencial = item.get('sequencialCompra')
+
+            # Se tiver o número de controle, usamos o link v2 direto (Mais seguro)
+            if n_controle:
+                link_valido = f"https://pncp.gov.br/app/editais/v2/compra/{n_controle}"
+            else:
+                # Plano B: Caso o controle falhe, montamos a rota v2 manual
+                link_valido = f"https://pncp.gov.br/app/editais/v2/compra/{cnpj_limpo}/{ano}/{sequencial}"
             if data_fim_str:
                 try:
                     data_fim=datetime.fromisoformat(data_fim_str.replace('Z', '').split('.')[0])
+
+                    if data_fim<=agora:
+                        continue
                     data_formatada=data_fim.strftime('%d/%m/%Y %H:%M')
                     data_ordenacao=data_fim
                 except:
                     data_formatada = 'NA'
             else:
                 data_formatada='NA'
+
             registro = {
                 'DATA': data_formatada,
                 'DATA_DT':data_ordenacao,
@@ -35,7 +52,8 @@ class MonitorClientes(BaseMonitor):
                 'MODALIDADE': item.get('modalidadeNome', '').upper(),
                 'ORGAO': item.get('orgaoEntidade', {}).get('razaoSocial', '').upper(),
                 'OBJETO': objeto_limpo,
-                'UASG': item.get('unidadeOrgao', {}).get('codigoUnidade', "")
+                'UASG': item.get('unidadeOrgao', {}).get('codigoUnidade', ""),
+                'LINK':item.get('linkSistemaOrigem')
             }
             lista_temp.append(registro)
         lista_temp.sort(key=lambda x: x['DATA_DT'])
@@ -89,6 +107,7 @@ class MonitorClientes(BaseMonitor):
             ws.column_dimensions['D'].width = 40  # Órgão
             ws.column_dimensions['E'].width = 60  # Objeto
             ws.column_dimensions['F'].width = 12  # UASG
+            ws.column_dimensions['G'].width = 24  # link
 
             wb.save(caminho_arquivo)
 
