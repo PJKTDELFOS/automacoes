@@ -18,6 +18,8 @@ def remover_acentos(texto):
 
 class MonitorClientes(BaseMonitor):
     def filtros(self,dados_brutos):
+        if hasattr(self,'palavras_chave'):
+            self.palavras_chave=[remover_acentos(k) for k in self.palavras_chave]
         self.dados_filtrados=[]
         lista_temp=[]
         for item in dados_brutos:
@@ -27,18 +29,12 @@ class MonitorClientes(BaseMonitor):
             data_fim_str=item.get('dataEncerramentoProposta','')
             agora = datetime.now(timezone.utc)
             data_ordenacao = datetime(2099, 1, 1)
-            n_controle = item.get('numeroControlePNCP')
             cnpj = item.get('orgaoEntidade', {}).get('cnpj')
             cnpj_limpo = str(cnpj).replace('.', '').replace('/', '').replace('-', '')
-            ano = item.get('anoCompra')
-            sequencial = item.get('sequencialCompra')
+
 
             # Se tiver o número de controle, usamos o link v2 direto (Mais seguro)
-            if n_controle:
-                link_valido = f"https://pncp.gov.br/app/editais/v2/compra/{n_controle}"
-            else:
-                # Plano B: Caso o controle falhe, montamos a rota v2 manual
-                link_valido = f"https://pncp.gov.br/app/editais/v2/compra/{cnpj_limpo}/{ano}/{sequencial}"
+
             if data_fim_str:
                 try:
                     data_fim_utc = datetime.fromisoformat(data_fim_str).replace(tzinfo=timezone.utc)
