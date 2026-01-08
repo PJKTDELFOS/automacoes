@@ -5,10 +5,16 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 import re
 import os
+import unicodedata
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from engine_busca_pncp.base_monitor import BaseMonitor
 
 
+
+def remover_acentos(texto):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD',texto)
+    if unicodedata.category(c)!='Mn').upper()
 
 class MonitorClientes(BaseMonitor):
     def filtros(self,dados_brutos):
@@ -17,6 +23,7 @@ class MonitorClientes(BaseMonitor):
         for item in dados_brutos:
             objeto=item.get('objetoCompra','') or ""
             objeto_limpo = re.sub(r'[\x00-\x1F\x7F]', '', objeto).strip().upper()
+            objeto_normalizado=remover_acentos(objeto_limpo)
             data_fim_str=item.get('dataEncerramentoProposta','')
             agora = datetime.now(timezone.utc)
             data_ordenacao = datetime(2099, 1, 1)
@@ -52,7 +59,7 @@ class MonitorClientes(BaseMonitor):
                 'NUMERO': f"{item.get('numeroCompra')}/{item.get('anoCompra')}",
                 'MODALIDADE': item.get('modalidadeNome', '').upper(),
                 'ORGAO': item.get('orgaoEntidade', {}).get('razaoSocial', '').upper(),
-                'OBJETO': objeto_limpo,
+                'OBJETO': objeto_normalizado,
                 'UASG': item.get('unidadeOrgao', {}).get('codigoUnidade', ""),
                 'LINK':item.get('linkSistemaOrigem')
             }
