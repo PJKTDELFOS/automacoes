@@ -1,6 +1,6 @@
 import sys
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta,timezone
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 import re
@@ -18,7 +18,7 @@ class MonitorClientes(BaseMonitor):
             objeto=item.get('objetoCompra','') or ""
             objeto_limpo = re.sub(r'[\x00-\x1F\x7F]', '', objeto).strip().upper()
             data_fim_str=item.get('dataEncerramentoProposta','')
-            agora=datetime.now()
+            agora = datetime.now(timezone.utc)
             data_ordenacao = datetime(2099, 1, 1)
             n_controle = item.get('numeroControlePNCP')
             cnpj = item.get('orgaoEntidade', {}).get('cnpj')
@@ -34,12 +34,13 @@ class MonitorClientes(BaseMonitor):
                 link_valido = f"https://pncp.gov.br/app/editais/v2/compra/{cnpj_limpo}/{ano}/{sequencial}"
             if data_fim_str:
                 try:
-                    data_fim=datetime.fromisoformat(data_fim_str.replace('Z', '').split('.')[0])
+                    data_fim_utc = datetime.fromisoformat(data_fim_str).replace(tzinfo=timezone.utc)
 
-                    if data_fim<=agora:
+                    if data_fim_utc<=agora:
                         continue
-                    data_formatada=data_fim.strftime('%d/%m/%Y %H:%M')
-                    data_ordenacao=data_fim
+                    data_brasilia = data_fim_utc.astimezone(timezone(timedelta(hours=-3)))
+                    data_formatada = data_brasilia.strftime('%d/%m/%Y %H:%M')
+                    data_ordenacao=data_fim_utc
                 except:
                     data_formatada = 'NA'
             else:
