@@ -100,7 +100,7 @@ def envios():
             'palavras': [
                 'site','sistema','pagina web','TIC','informatica','tecnologia da informacao','web','dados',
             ],
-            'uf': REGIOES['SUDESTE'],  # RJ
+            'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
         },
 
