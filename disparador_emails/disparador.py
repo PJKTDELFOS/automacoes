@@ -51,8 +51,6 @@ class Disparador_de_emails:
             </ul>
           </div>
 
-          
-
           <h3 style="color: #2c3e50;">Inicie seu Teste Gratuito e Sem Compromisso</h3>
           <p>Validar a eficiência na prática é o melhor caminho. Receba nossas atualizações e sinta a diferença no seu dia a dia.</p>
 

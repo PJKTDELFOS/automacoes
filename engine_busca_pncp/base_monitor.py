@@ -1,4 +1,6 @@
 import json
+import re
+
 import pandas as pd
 from datetime import datetime
 import os
@@ -24,11 +26,11 @@ class BaseMonitor(ABC):
 
     def busca_db_central(self):
         condicoes=' OR '.join(
-            ["objeto ILIKE %s" for _ in self.palavras_chave]
+            ["objeto ~* %s" for _ in self.palavras_chave]
         )
         query=f'SELECT identificador_certame,dados_json from public.pncp_dados_brutos where ({condicoes}) '
         params=[
-            f'%{p}%' for p in self.palavras_chave
+            f'\\y{re.escape(p)}\\y' for p in self.palavras_chave
         ]
         if self.uf:
             if isinstance(self.uf,list):
@@ -63,10 +65,15 @@ class BaseMonitor(ABC):
         self.dados_filtrados=[]
         self.ids_a_registrar=[]
         for id_hash,dados_json in resultados_cache:
-            if not self.db.ja_enviado(id_hash,self.cliente):
-                item=dados_json if isinstance(dados_json,dict) else json.loads(dados_json)
-                self.dados_filtrados.append(item)
-                self.ids_a_registrar.append(id_hash)
+            if not dados_json:
+                continue
+            try:
+                if not self.db.ja_enviado(id_hash,self.cliente):
+                    item=dados_json if isinstance(dados_json,dict) else json.loads(dados_json)
+                    self.dados_filtrados.append(item)
+                    self.ids_a_registrar.append(id_hash)
+            except(json.decoder.JSONDecodeError,TypeError):
+                continue
 
     def gerar_planilha(self):
         if not self.dados_filtrados:
@@ -90,6 +97,8 @@ class BaseMonitor(ABC):
             if not self.dados_filtrados:
                 return None,[]
             self.filtros(self.dados_filtrados)
+            if not self.dados_filtrados:
+                return None,[]
             caminho_anexo=self.gerar_planilha()
             return caminho_anexo,self.ids_a_registrar
         except Exception as e_geral:

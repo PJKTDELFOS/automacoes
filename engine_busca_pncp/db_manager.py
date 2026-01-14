@@ -41,11 +41,22 @@ class DBManager:
                         dados_json JSONB
                     );
                 """)
+                cur.execute(
+                    """
+                    CREATE EXTENSION IF NOT EXISTS pg_trgm;;
+                    """
+                )
+                cur.execute("""
+                                    CREATE INDEX IF NOT EXISTS idx_objeto_regex_trgm 
+                                    ON public.pncp_dados_brutos USING GIN (objeto gin_trgm_ops);
+                                """)
 
                 cur.execute("""
                     CREATE INDEX IF NOT EXISTS idx_objeto_busca_texto 
                     ON public.pncp_dados_brutos USING GIN (to_tsvector('portuguese', objeto));
                 """)
+
+
 
                 # 2. Tabela de Histórico de Envios
                 cur.execute("""
