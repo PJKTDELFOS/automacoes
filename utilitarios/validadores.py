@@ -30,7 +30,7 @@ class Validadores:
             int(cnpj[i]) * pesos_2[i] for i in range(13)
         )
         d2 = 11 - (soma % 11)
-        d2 = 0 if d2 >= 10 else d1
+        d2 = 0 if d2 >= 10 else d2
         return d2==int(cnpj[13])
 
 

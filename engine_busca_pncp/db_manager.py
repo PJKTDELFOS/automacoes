@@ -43,7 +43,7 @@ class DBManager:
                 """)
                 cur.execute(
                     """
-                    CREATE EXTENSION IF NOT EXISTS pg_trgm;;
+                    CREATE EXTENSION IF NOT EXISTS pg_trgm;
                     """
                 )
                 cur.execute("""

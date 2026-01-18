@@ -2,7 +2,6 @@ import re
 import os
 import pandas as pd
 import psycopg2.extras
-
 from engine_busca_pncp.db_manager import DBManager
 from utilitarios.validadores import Validadores
 
@@ -35,9 +34,10 @@ class CargaCSV:
                 sep=';',
                 chunksize=5000,
                 dtype=str,
-                encoding='utf-8',
+                encoding='latin-1',
                 on_bad_lines='skip',
                 engine='c',
+                quotechar='"'
 
             )
         except Exception as e:
