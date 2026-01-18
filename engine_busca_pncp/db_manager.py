@@ -88,8 +88,26 @@ class DBManager:
                     );
                 """)
 
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS public.pncp_leads_brutos (
+                    cnpj_cpf VARCHAR(20) PRIMARY KEY, -- Chave primária para evitar duplicatas
+                    razao_social TEXT,
+                    email VARCHAR(255),               -- Vai ficar vazio inicialmente
+                    tipo_documento VARCHAR(10),       -- CPF ou CNPJ
+                    status_enriquecimento VARCHAR(20) DEFAULT 'PENDENTE',
+                     status_envio_campanha VARCHAR(20) DEFAULT 'PENDENTE',
+                    data_importacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            );
+                    """
+                )
+
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_logs_cliente ON public.logs_bot_pncp(cliente);")
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_logs_data ON public.logs_bot_pncp(timestamp_log);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_status_busca ON public.pncp_leads_brutos(status_enriquecimento);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_status_campanha ON public.pncp_leads_brutos(status_envio_campanha);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_razao_social_busca ON public.pncp_leads_brutos(razao_social);")
+
         finally:
             conn.close()
 
@@ -122,3 +140,69 @@ class DBManager:
                 connection.commit()
         except Exception as e:
             print(f' erro ao consultar DB {e}')
+
+    def get_leads_para_enriquecimento(self,limite=50):
+        query="""
+        SELECT cnpj_cpf,razao_social from public.pncp_leads_brutos 
+        WHERE status_enriquecimento = 'PENDENTE' AND tipo_documento = 'CNPJ'
+        LIMIT %s
+        """
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query,(limite,))
+                    return cursor.fetchall()
+        except Exception as e:
+            print(f' erro ao consultar DB {e}')
+            return []
+    def atualizar_led_enriquecido(self,cnpj,email):
+        query="""
+        UPDATE public.pncp_leads_brutos SET email = %s ,status_enriquecimento = 'PROCESSADO'
+        WHERE cnpj_cpf = %s
+        """
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query,(email,cnpj))
+                connection.commit()
+        except Exception as e:
+            print(f"Erro ao atualizar lead {cnpj}: {e}")
+
+    def marcar_processado_sem_sucesso(self,cnpj):
+        query="UPDATE public.pncp_leads_brutos SET status_enriquecimento = 'NAO_ENCONTRADO' WHERE cnpj_cpf = %s"
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query,(cnpj,))
+                connection.commit()
+        except Exception as e:
+            print(f"Erro ao marcar lead {cnpj}: {e}")
+
+    def get_leads_campanha(self,limite=50):
+        query="""
+            SELECT cnpj_cpf, razao_social, email FROM public.pncp_leads_brutos 
+            WHERE status_envio_campanha = 'PENDENTE' 
+            AND email IS NOT NULL AND email != ''
+            LIMIT %s
+        
+        """
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query,(limite,))
+                    return cursor.fetchall()
+        except Exception as e:
+            print(f' erro ao buscar campanha {e}')
+            return []
+    def atualizar_status_campanha(self,cnpj,satus_novo):
+        query="UPDATE public.pncp_leads_brutos SET status_envio_campanha = %s WHERE cnpj_cpf = %s"
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query,(satus_novo,cnpj))
+                connection.commit()
+        except Exception as e:
+            print(f"Erro status campanha {cnpj}: {e}")
+
+
+
