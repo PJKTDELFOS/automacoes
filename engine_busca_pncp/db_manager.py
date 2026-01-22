@@ -91,12 +91,14 @@ class DBManager:
                 cur.execute(
                     """
                     CREATE TABLE IF NOT EXISTS public.pncp_leads_brutos (
-                    cnpj_cpf VARCHAR(20) PRIMARY KEY, -- Chave primária para evitar duplicatas
+                    cnpj_cpf VARCHAR(20) PRIMARY KEY,
                     razao_social TEXT,
-                    email VARCHAR(255),               -- Vai ficar vazio inicialmente
-                    tipo_documento VARCHAR(10),       -- CPF ou CNPJ
+                    email VARCHAR(255),
+                    telefone VARCHAR(50),             -- Adicionei aqui
+                    tipo_documento VARCHAR(10),
                     status_enriquecimento VARCHAR(20) DEFAULT 'PENDENTE',
-                     status_envio_campanha VARCHAR(20) DEFAULT 'PENDENTE',
+                    status_envio_campanha VARCHAR(20) DEFAULT 'PENDENTE',
+                    data_envio_campanha TIMESTAMP,    -- Adicionei aqui
                     data_importacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             );
                     """
@@ -155,15 +157,19 @@ class DBManager:
         except Exception as e:
             print(f' erro ao consultar DB {e}')
             return []
-    def atualizar_led_enriquecido(self,cnpj,email):
+    def atualizar_led_enriquecido(self,cnpj,email,telefone):
         query="""
-        UPDATE public.pncp_leads_brutos SET email = %s ,status_enriquecimento = 'PROCESSADO'
+        UPDATE public.pncp_leads_brutos 
+        SET 
+            email = COALESCE(%s, email), 
+            telefone = COALESCE(%s, telefone),
+            status_enriquecimento = 'PROCESSADO'
         WHERE cnpj_cpf = %s
         """
         try:
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
-                    cursor.execute(query,(email,cnpj))
+                    cursor.execute(query,(email,telefone,cnpj))
                 connection.commit()
         except Exception as e:
             print(f"Erro ao atualizar lead {cnpj}: {e}")
@@ -194,12 +200,26 @@ class DBManager:
         except Exception as e:
             print(f' erro ao buscar campanha {e}')
             return []
-    def atualizar_status_campanha(self,cnpj,satus_novo):
-        query="UPDATE public.pncp_leads_brutos SET status_envio_campanha = %s WHERE cnpj_cpf = %s"
+
+    def atualizar_status_campanha(self,cnpj,status_novo):
+        if status_novo in ['enviado','sucesso']:
+            query="""
+            UPDATE public.pncp_leads_brutos 
+                SET status_envio_campanha = %s, 
+                    data_envio_campanha = NOW() 
+                WHERE cnpj_cpf = %s
+            """
+        else:
+            query="""
+            UPDATE public.pncp_leads_brutos 
+                SET status_envio_campanha = %s 
+                WHERE cnpj_cpf = %s
+            """
+
         try:
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
-                    cursor.execute(query,(satus_novo,cnpj))
+                    cursor.execute(query,(status_novo,cnpj))
                 connection.commit()
         except Exception as e:
             print(f"Erro status campanha {cnpj}: {e}")

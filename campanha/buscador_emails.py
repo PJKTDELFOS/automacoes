@@ -17,20 +17,35 @@ class  BuscadorEmails:
             return email.lower()
         return None
 
+    def validar_telefone(self,ddd_ou_completo,numero=None):
+
+        if numero:
+            num_limpo=str(numero).strip().replace('-','').replace('.','').replace(' ','')
+            ddd_limpo=str(ddd_ou_completo).strip() if ddd_ou_completo else ''
+            return f'({ddd_limpo}){num_limpo}'
+        elif ddd_ou_completo:
+            return str(ddd_ou_completo).strip()
+        return None
+
+
 
     def consultar_api(self,cnpj):
         cnpj_limpo=str(cnpj).replace('.', '').replace('/', '').replace('-', '')
+
         try:
             print(f"   🔍 [1/2] Tentando BrasilAPI: {cnpj_limpo}...")
             response=requests.get(self.brasil_api_url.format(cnpj_limpo),timeout=5)
             if response.status_code==200:
                 dados=response.json()
                 email_bruto=dados.get('email',None)
-
                 email_validado=self.validar_email(email_bruto)
-                if email_validado:
-                    print(f"      ✅ Achou na BrasilAPI: {email_validado}")
-                    return email_validado, 2
+                telefone_bruto=dados.get('ddd_telefone_1','')
+                telefone_validado=self.validar_telefone(telefone_bruto)
+
+                if email_validado or telefone_validado:
+                    print(f"      ✅ Achou na BrasilAPI: {email_validado},{telefone_validado}")
+                    return email_validado,telefone_validado,2
+
             elif response.status_code==404:
                  print("      ⏳ email nao encontrado...")
         except Exception as e:
@@ -42,21 +57,28 @@ class  BuscadorEmails:
             espera_obrigatoria=22
             if response.status_code==200:
                 dados=response.json()
-                email_bruto=dados.get('estabelecimento',{}).get('email',None)
+                estabelecimento=dados.get('estabelecimento',{})
+                email_bruto=estabelecimento.get('email',None)
                 email_validado=self.validar_email(email_bruto)
-                if email_validado:
-                    print(f"      ✅ SALVO PELA CNPJ.ws: {email_validado}")
-                    return email_validado, espera_obrigatoria
+                ddd=estabelecimento.get('ddd1')
+                numero=estabelecimento.get('telefone1')
+                telefone_final=self.validar_telefone(ddd,numero)
+
+                if email_validado or telefone_final:
+                    print(f"      ✅ SALVO PELA CNPJ.ws: {email_validado}, telefone {telefone_final}")
+
+                    return email_validado,telefone_final, espera_obrigatoria
                 else:
                     print("      🗑️ Veio vazio também na CNPJ.ws")
+
             elif response.status_code==429:
                 print("      🛑 Rate Limit CNPJ.ws (Muitas requisições).")
                 # Se tomou rate limit aqui, tem que esperar mais
-                return None, 60
-            return None, espera_obrigatoria
+                return None,None, 60
+            return None,None, espera_obrigatoria
         except Exception as e:
             print(f"      ❌ Erro CNPJ.ws: {e}")
-            return None, 22
+            return None,None, 22
 
 
 
@@ -69,9 +91,9 @@ class  BuscadorEmails:
                 print("💤 Nada para fazer. Todos os CNPJs já foram processados.")
                 break
             for cnpj, razao in pendentes:
-                email_encontrado,tempo_pausa=self.consultar_api(cnpj)
-                if email_encontrado:
-                    self.db_manager.atualizar_led_enriquecido(cnpj,email_encontrado)
+                email_encontrado,telefone,tempo_pausa=self.consultar_api(cnpj)
+                if email_encontrado or telefone:
+                    self.db_manager.atualizar_led_enriquecido(cnpj,email_encontrado,telefone)
                 else:
                     self.db_manager.marcar_processado_sem_sucesso(cnpj)
                 if tempo_pausa>2:
