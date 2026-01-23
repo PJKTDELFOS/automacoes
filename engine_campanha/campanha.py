@@ -1,5 +1,5 @@
 import time
-from disparador import Disparador_de_emails
+from engine_campanha.disparador import Disparador_de_emails
 import random
 from engine_busca_pncp.db_manager import DBManager
 #reverter a correção caso o banco de dados de email nao se mostrar viavel

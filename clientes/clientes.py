@@ -57,7 +57,8 @@ class MonitorClientes(BaseMonitor):
                 'ORGAO': item.get('orgaoEntidade', {}).get('razaoSocial', '').upper(),
                 'OBJETO': objeto_normalizado,
                 'UASG': item.get('unidadeOrgao', {}).get('codigoUnidade', ""),
-                'LINK':item.get('linkSistemaOrigem')
+                'LINK':item.get('linkSistemaOrigem'),
+                'UF': item.get('unidadeOrgao',{}).get('ufSigla','').upper(),
             }
             lista_temp.append(registro)
         lista_temp.sort(key=lambda x: x['DATA_DT'])
@@ -112,6 +113,7 @@ class MonitorClientes(BaseMonitor):
             ws.column_dimensions['E'].width = 60  # Objeto
             ws.column_dimensions['F'].width = 12  # UASG
             ws.column_dimensions['G'].width = 24  # link
+            ws.column_dimensions['H'].width = 24  # UF
 
             wb.save(caminho_arquivo)
 

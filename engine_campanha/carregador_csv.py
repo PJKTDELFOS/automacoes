@@ -5,6 +5,10 @@ import psycopg2.extras
 from engine_busca_pncp.db_manager import DBManager
 from utilitarios.validadores import Validadores
 
+pasta_arquivos=os.path.dirname(os.path.abspath(__file__))
+caminho_csv=os.path.join(pasta_arquivos,'csv_campanha_janeiro.csv')
+
+
 
 class CargaCSV:
     def __init__(self, caminho_arquivo):
@@ -83,13 +87,12 @@ class CargaCSV:
 
 if __name__ == "__main__":
     # NOME DO SEU ARQUIVO NOVO
-    arquivo = "csv_campanha_janeiro.csv"
 
-    if os.path.exists(arquivo):
-        carregador = CargaCSV(arquivo)
+    if os.path.exists(caminho_csv):
+        carregador = CargaCSV(caminho_csv)
         carregador.carregar_dados_no_data_base()
     else:
-        print(f"Arquivo '{arquivo}' não encontrado.")
+        print(f"Arquivo '{caminho_csv}' não encontrado.")
 
 
 

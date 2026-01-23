@@ -1,12 +1,12 @@
-from clientes.clientes import MonitorClientes
-from datetime import datetime
 import time
-import os
-from engine_busca_pncp.coletor_central import ColetorCentral
-from engine_busca_pncp.email_manager import EmailManager
-from engine_busca_pncp.db_manager import DBManager
-from engine_busca_pncp.propriedades import Properties
+from datetime import datetime
+
 from clear_dir import Cleardirectory
+from clientes.clientes import MonitorClientes
+from engine_busca_pncp.coletor_central import ColetorCentral
+from engine_busca_pncp.db_manager import DBManager
+from engine_busca_pncp.email_manager import EmailManager
+from engine_busca_pncp.propriedades import Properties
 
 
 def envios():
@@ -39,56 +39,22 @@ def envios():
         'SUL': ['PR', 'RS', 'SC']
     }
 
-
     lista_de_clientes = [
 
         {
             'classe': MonitorClientes,
             'nome': 'Nova Rodovia 2007',
-            'email': ['comercial@nrgourmet.com.br','Gerencia@nrgourmet.com.br'],
+            'email': ['comercial@nrgourmet.com.br', 'Gerencia@nrgourmet.com.br'],
             'palavras': [
-                'refeicao','alimentacao','catering','cafe','almoco','ceia','colacao','lanche','janta','cozinha',
-                'copeiragem','apoio','formula','hipo','proteina','terceirizacao','cozinheiro','cozinheira','generos','alimenticios','cafe da manha',
-                'desjejum','almoço','janta','cozinheiros','lipo','generos alimenticios','pao','paes','pão','pães','ovos','lacteos','laticinios','comida',
-                'alimentos','quentinha','marmita','marmitex','preparaçao de alimentos','refeições prontas','preparação de refeições'
+                'refeicao', 'alimentacao', 'catering', 'cafe', 'almoco', 'ceia', 'colacao', 'lanche', 'janta',
+                'cozinha',
+                'copeiragem', 'apoio', 'formula', 'hipo', 'proteina', 'terceirizacao', 'cozinheiro', 'cozinheira',
+                'generos', 'alimenticios', 'cafe da manha',
+                'desjejum', 'almoço', 'janta', 'cozinheiros', 'lipo', 'generos alimenticios', 'pao', 'paes', 'pão',
+                'pães', 'ovos', 'lacteos', 'laticinios', 'comida',
+                'alimentos', 'quentinha', 'marmita', 'marmitex', 'preparaçao de alimentos', 'refeições prontas',
+                'preparação de refeições'
             ],
-            'uf': REGIOES['SUDESTE'][2],  # RJ
-            'metodo': 'resend'
-        },
-
-
-        {
-            'classe': MonitorClientes,
-            'nome': 'Efata Comercio & Servicos ',
-            'email': ['drrenanpontes@gmail.com'],
-            'palavras':[
-            "evento", "congresso", "feira", "simposio", "seminario", "palestra", "cerimonia", "conferencia", "formatura", "show",
-            "palco", "arquibancada", "camarote", "camarim", "toldo", "tenda", "confeccao", "uniforme", "vestuario", "farda",
-            "camisas", "jaleco", "avental", "macacao", "servico grafico", "impressao", "folder", "cartaz", "cartilha", "panfleto",
-            "fotolito", "catalogo", "capa processo", "material grafico", "carne iptu", "boleto", "acabamento", "espiral", "laser",
-            "imposto", "gabarito", "cartao resposta", "formulario", "codigo de barras", "sacola", "saco de lixo", "saco plastico",
-            "embalagem", "descartavel", "mangueira", "conduite", "artefato plastico", "limpeza galeria", "desobstrucao galeria",
-            "limpeza pluvial", "saneamento", "limpeza fossa", "rede esgoto", "servico limpeza", "conservacao", "higiene",
-            "mao de obra especializada", "terceirizacao", "locacao mao de obra", "apoio administrativo", "capina", "rocada",
-            "manutencao area verde", "coleta lixo", "residuo", "destinacao final", "poda arvore", "lixo hospitalar",
-            "tratamento residuo", "incineracao", "perfurocortante", "material contaminado", "obras", "servico construcao",
-            "alvenaria", "servico engenharia", "reforma", "ampliacao", "adequacao", "canalizacao", "pavimentacao", "calcada",
-            "calcamento", "urbanizacao", "edificacao", "terraplenagem", "estrutura metalica", "drenagem", "dragagem", "barragem",
-            "casa popular", "conjunto habitacional", "ponte", "viaduto", "passarela", "arrimo", "contencao", "servico eletrico",
-            "servico hidraulico", "tapa buraco", "estrada", "manutencao predial", "projeto", "arquitetura", "muro", "gesso",
-            "pintura", "forro", "divisoria", "drywall", "refrigeracao", "climatizacao", "exaustao", "split", "iluminacao publica",
-            "led", "energia", "manutencao veiculo", "manutencao frota", "mecanica", "lanternagem", "oficina", "retifica motor",
-            "funilaria", "estofado", "adesivagem", "envelopamento", "pecas veiculo", "autopecas", "acessorios", "graxa",
-            "oleo lubrificante", "guincho", "alinhamento", "balanceamento", "aquisicao veiculo", "compra frota", "utilitario",
-            "caminhao", "medicamento", "material medico", "hospitalar", "enfermagem", "odonto", "oftalmo", "cirurgico",
-            "ortopedico", "ortese", "protese", "laboratorio", "reagente", "vidraria", "bucal", "maxilo", "equipamento medico",
-            "mocho", "material escritorio", "expediente", "material escolar", "pedagogico", "didatico", "papel", "limpeza",
-            "produto higienico", "saneante", "domissaneante", "agua mineral", "genero alimenticio", "pereciveis", "sacaria",
-            "cesta basica", "merenda", "lanche", "informatica", "hardware", "periferico", "audio e video", "audiovisual",
-            "sonorizacao", "instrumento musical", "moveis escritorio", "mobilia", "colchao", "cama mesa e banho", "enxoval",
-            "textil", "tecido", "lampada", "luminaria", "reator", "poste", "disjuntor", "rele", "transformador", "cabeamento",
-            "nobreak", "estabilizador", "papelaria", "armarinho", "racao animal", "transporte pessoas", "fretamento",
-            "transporte escolar", "transporte coletivo", "locacao veiculo", "aluguel frota", "frete", "mudanca"] ,
             'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
         },
@@ -98,12 +64,24 @@ def envios():
             'nome': 'Albert Pimentel ',
             'email': ['albert.franca1992@gmail.com'],
             'palavras': [
-                'site','sistema','pagina web','TIC','informatica','tecnologia da informacao','web','dados',
+                'site', 'sistema', 'pagina web', 'TIC', 'informatica', 'tecnologia da informacao', 'web', 'dados',
             ],
             'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
         },
-        
+        {
+            'classe': MonitorClientes,
+            'nome': 'SEBOLD',
+            'email': ['alcionesebold.als@gmail.com'],
+            'palavras': [
+                "Ferramentas Elétricas", "Equipamentos eletrônicos", "Empilhadeiras", "Paleteiras",
+                "Cortador de grama", "Lavadora de alta pressão", "Materiais de construção", "Jogos",
+                "Brinquedos", "Bebedouro de água", "Purificador de água", "Fechadura",
+                "Drone", "Equipamentos de panificação"
+            ],
+            'uf': ['SP', 'PR', 'SC', 'RS'],  # RJ
+            'metodo': 'resend'
+        },
 
     ]
 
