@@ -12,7 +12,7 @@ from utilitarios.validadores import Validadores
 class CargaPNCP:
     def __init__(self, dias_coleta=15):
         self.db_manager = DBManager()
-        self.endpoint = "https://pncp.gov.br/api/consulta/v1/contratos/atualizacao"
+        self.endpoint = "https://pncp.gov.br/api/consulta/v1/contratos"
         self.dias_coleta = dias_coleta
 
     def sanitizacao_validacao(self, valor):
@@ -36,9 +36,14 @@ class CargaPNCP:
         pagina = 1
         total_novos = 0
         dias = dias_passados if dias_passados is not None else self.dias_coleta
-        data_limite = hoje - timedelta(days=dias)
-        data_final_api = data_limite.strftime("%Y%m%d")
-        data_para_exibir = data_limite.strftime("%d/%m/%Y")
+
+        data_inicio = hoje - timedelta(days=dias)
+
+        # --- TENTATIVA 2: MUDANDO PARA FORMATO COM TRAÇOS (YYYY-MM-DD) ---
+        str_data_inicial = data_inicio.strftime("%Y%m%d") # PNCP costuma usar YYYYMMDD, mas vamos debugar
+        str_data_final = hoje.strftime("%Y%m%d")
+
+        data_exibir = data_inicio.strftime("%d/%m/%Y")
 
         # Headers mais completos para evitar bloqueios de firewall
         headers = {
@@ -47,14 +52,15 @@ class CargaPNCP:
             'Referer': 'https://pncp.gov.br/app/contratos'
         }
 
-        print(f"[*] Iniciando coleta central: {data_para_exibir}")
-        print(f"[*] DEBUG: Data Final API: {data_final_api}")  # ADICIONE ISSO
+        print(f"[*] Iniciando coleta central: {str_data_final}")
+        print(f"[*] DEBUG: Data Final API: {str_data_final}")  # ADICIONE ISSO
         print(f"[*] DEBUG: Endpoint: {self.endpoint}")
 
         try:
             while True:
                 params = {
-                    'dataFinal': data_final_api,
+                    'dataInicial': str_data_inicial,
+                    'dataFinal': str_data_final,
                     'pagina': pagina,
                     'tamanhoPagina': 50
                 }
@@ -88,9 +94,9 @@ class CargaPNCP:
                 if not items:
                     print("[*] Fim dos dados retornados pela API.")
                     break
-                for item in items:
-                    if self.salvar_db(item):
-                        total_novos += 1
+                novos_nesta_pagina=self.salvar_db(items)
+                total_novos+=novos_nesta_pagina
+
                 total_paginas = dados.get('totalPaginas', 0)
                 print(f"[Página {pagina}/{total_paginas}] Novos itens acumulados: {total_novos}")
 
@@ -104,34 +110,46 @@ class CargaPNCP:
         except Exception as e:
             print(f"[*] Error: {e}")
 
-    def salvar_db(self, item):
+    def salvar_db(self, lista_items):
         query = """
-        INSERT INTO public.pncp_leads_brutos 
-        (cnpj_cpf, razao_social, email, tipo_documento)
-        VALUES (%s, %s, %s, %s)
-        ON CONFLICT (cnpj_cpf) 
-        DO UPDATE SET 
-            razao_social = EXCLUDED.razao_social,
-            tipo_documento = EXCLUDED.tipo_documento
-        """
+            INSERT INTO public.pncp_leads_brutos 
+            (cnpj_cpf, razao_social, email, tipo_documento)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (cnpj_cpf) 
+            DO UPDATE SET 
+            razao_social = EXCLUDED.razao_social
+            """
+        dados_para_inserir=[]
 
+        for item in lista_items:
+            ni_bruto=item.get('niFornecedor')
+            razao_social = item.get('nomeRazaoSocialFornecedor', '') or item.get('nomeRazaoSocial', '')
+            doc_limpo,tipo_doc=self.sanitizacao_validacao(ni_bruto)
+            if doc_limpo and razao_social:
+                dados_para_inserir.append(
+                    (doc_limpo,razao_social.upper().strip(),None,tipo_doc)
+                )
+        if not dados_para_inserir:
+            return 0
+        contagem_sucessos=0
         try:
-            ni_bruto = item.get('niFornecedor')
-            razao_social = item.get('nomeRazaoSocialFornecedor', '').upper()
-            documento_limpo, tipo_doc = self.sanitizacao_validacao(ni_bruto)
-            if not documento_limpo:
-                return False
             with self.db_manager.get_connection() as connection:
                 with connection.cursor() as cursor:
-
-
-                    cursor.execute(
-                        query,(documento_limpo,razao_social,None,tipo_doc)
-                        )
-                    connection.commit()
-                    return cursor.rowcount >0
+                    for tupla in dados_para_inserir:
+                        cursor.execute(query, tupla)
+                        if cursor.rowcount > 0:
+                            contagem_sucessos+=1
+                connection.commit()
+            return contagem_sucessos
         except Exception as e:
-            print(f"Erro ao persistir item : {e}")
-            return False
+            print(f"[!] Erro ao salvar lote no banco: {e}")
+            return 0
 
+
+if __name__ == "__main__":
+    # Cria o robô. O padrão é 15 dias, mas para testar agora recomendo colocar 1 ou 3 dias.
+    robo = CargaPNCP(dias_coleta=3)
+
+    # Manda ele trabalhar
+    robo.coleta()
 
