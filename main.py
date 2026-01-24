@@ -82,6 +82,17 @@ def envios():
             'uf': ['SP', 'PR', 'SC', 'RS'],  # RJ
             'metodo': 'resend'
         },
+        {
+            'classe': MonitorClientes,
+            'nome': 'MEGA BIM PROJETOS',
+            'email': ['megabimprojetos@gmail.com'],
+            'palavras': [
+                "Elaboração de projeto", "Bim", "Arquitetônico ", "Arquitetura",
+                "Interiores", "Paisagismo", "Laudo",
+            ],
+            'uf': [],  # RJ
+            'metodo': 'resend'
+        },
 
     ]
 

@@ -18,14 +18,16 @@ class  BuscadorEmails:
         return None
 
     def validar_telefone(self,ddd_ou_completo,numero=None):
-
+        resultado=None
         if numero:
             num_limpo=str(numero).strip().replace('-','').replace('.','').replace(' ','')
             ddd_limpo=str(ddd_ou_completo).strip() if ddd_ou_completo else ''
-            return f'({ddd_limpo}){num_limpo}'
+            resultado= f'({ddd_limpo}){num_limpo}'
         elif ddd_ou_completo:
-            return str(ddd_ou_completo).strip()
-        return None
+            resultado=str(ddd_ou_completo).strip()
+        if not resultado or len(resultado)<8:
+            return None
+        return resultado
 
 
 
@@ -40,8 +42,13 @@ class  BuscadorEmails:
                 dados=response.json()
                 email_bruto=dados.get('email',None)
                 email_validado=self.validar_email(email_bruto)
+                if email_validado:
+                    print(f"      🔹 BrasilAPI trouxe E-mail: {email_validado}")
+
                 telefone_bruto=dados.get('ddd_telefone_1','')
                 telefone_validado=self.validar_telefone(telefone_bruto)
+                if telefone_validado:
+                    print(f"      🔹 BrasilAPI trouxe Telefone: {telefone_validado}")
 
             elif response.status_code==404:
                  print("      ⏳ email nao encontrado...")
@@ -89,10 +96,6 @@ class  BuscadorEmails:
             print(f"      ❌ Erro CNPJ.ws: {e}")
             return email_validado, telefone_validado, 22
 
-
-
-
-
     def iniciar(self):
         print("🏭 Iniciando Enriquecimento HÍBRIDO (BrasilAPI + CNPJ.ws)...")
 
@@ -110,9 +113,6 @@ class  BuscadorEmails:
                 if tempo_pausa>2:
                     print(f"      ⏳ Pausando {tempo_pausa}s para respeitar a API...")
                 time.sleep(tempo_pausa)
-
-
-
 
 
 

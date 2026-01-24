@@ -161,15 +161,20 @@ class DBManager:
         query="""
         UPDATE public.pncp_leads_brutos 
         SET 
-            email = COALESCE(%s, email), 
-            telefone = COALESCE(%s, telefone),
+            email = CASE WHEN %s IS NOT NULL THEN %s ELSE email END, 
+            telefone = CASE WHEN %s IS NOT NULL THEN %s ELSE telefone END,
             status_enriquecimento = 'PROCESSADO'
         WHERE cnpj_cpf = %s
         """
         try:
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
-                    cursor.execute(query,(email,telefone,cnpj))
+                    cursor.execute(query,(email,email,telefone,telefone,cnpj))
+                    if cursor.rowcount == 0:
+                        print(f"      ⚠️ AVISO: Nenhuma linha atualizada para {cnpj}. CNPJ existe?")
+                    else:
+                        print(f"      💾 DB: {cnpj} atualizado com sucesso (Commit OK).")
+
                 connection.commit()
         except Exception as e:
             print(f"Erro ao atualizar lead {cnpj}: {e}")
