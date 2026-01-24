@@ -8,8 +8,6 @@ from utilitarios.validadores import Validadores
 pasta_arquivos=os.path.dirname(os.path.abspath(__file__))
 caminho_csv=os.path.join(pasta_arquivos,'csv_campanha_janeiro.csv')
 
-
-
 class CargaCSV:
     def __init__(self, caminho_arquivo):
         self.caminho_arquivo = caminho_arquivo
