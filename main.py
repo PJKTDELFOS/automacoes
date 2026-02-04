@@ -58,7 +58,6 @@ def envios():
             'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
         },
-
         {
             'classe': MonitorClientes,
             'nome': 'Albert Pimentel ',
