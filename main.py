@@ -68,30 +68,7 @@ def envios():
             'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
         },
-        {
-            'classe': MonitorClientes,
-            'nome': 'SEBOLD',
-            'email': ['alcionesebold.als@gmail.com'],
-            'palavras': [
-                "Ferramentas Elétricas", "Equipamentos eletrônicos", "Empilhadeiras", "Paleteiras",
-                "Cortador de grama", "Lavadora de alta pressão", "Materiais de construção", "Jogos",
-                "Brinquedos", "Bebedouro de água", "Purificador de água", "Fechadura",
-                "Drone", "Equipamentos de panificação"
-            ],
-            'uf': ['SP', 'PR', 'SC', 'RS'],  # RJ
-            'metodo': 'resend'
-        },
-        {
-            'classe': MonitorClientes,
-            'nome': 'MEGA BIM PROJETOS',
-            'email': ['megabimprojetos@gmail.com'],
-            'palavras': [
-                "Elaboração de projeto", "Bim", "Arquitetônico ", "Arquitetura",
-                "Interiores", "Paisagismo", "Laudo",
-            ],
-            'uf': [],  # RJ
-            'metodo': 'resend'
-        },
+
 
     ]
 
