@@ -22,6 +22,13 @@ def envios():
     # 2. Coleta Centralizada (Cache para evitar múltiplas requisições ao PNCP)
     try:
         print("\n[1/2] Iniciando Coleta Centralizada (Cache)...")
+        try:
+            print("Iniciando a limpeza do banco")
+            db.limpar_db_datas_vencidas()
+        except Exception as e:
+            print(f' erro ao limpar das linhas {e}')
+
+
         coletor = ColetorCentral(dias_padrao=15)
         coletor.coleta_diaria()
     except Exception as e:
@@ -68,7 +75,19 @@ def envios():
             'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
         },
-
+        {
+            'classe': MonitorClientes,
+            'nome': 'GS Estofados ',
+            'email': ['gsestofadosdf@hotmail.com'],
+            'palavras': [
+                "Limpeza de sofás", "higienização de sofás", "impermeabilização de sofás",
+                "fabricação de sofás", "reforma de sofás", "manutenção de cadeiras de escritório",
+                "poltronas pós operatória", "aluguel de poltronas pós operatória", "limpeza de carpete" ,
+                "limpeza de tapeçaria em geral"
+            ],
+            'uf': REGIOES['CENTRO_OESTE'][0:2], # RJ
+            'metodo': 'resend'
+        },
 
     ]
 

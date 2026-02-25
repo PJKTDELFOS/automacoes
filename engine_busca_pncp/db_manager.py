@@ -230,4 +230,26 @@ class DBManager:
             print(f"Erro status campanha {cnpj}: {e}")
 
 
+    def limpar_db_datas_vencidas(self):
+        query='''
+        DELETE FROM public.pncp_dados_brutos
+        where (dados_json->>'dataEncerramentoProposta') IS NOT NULL
+        AND (dados_json->>'dataEncerramentoProposta')::timestamp < NOW();
+        '''
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor()as cursor:
+                    cursor.execute(query)
+                    linhas_deletadas=cursor.rowcount
+                connection.commit()
+                print(f"      🧹 Faxina do Banco: {linhas_deletadas} "
+                      f"licitações vencidas foram deletadas com sucesso!")
+                return linhas_deletadas
+        except Exception as e:
+            print(f' erro ao limpar das linhas {e}')
+            return 0
+
+
+
+
 
