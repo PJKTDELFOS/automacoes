@@ -9,9 +9,9 @@ pasta_arquivos=os.path.dirname(os.path.abspath(__file__))
 caminho_csv=os.path.join(pasta_arquivos,'csv_campanha_janeiro.csv')
 
 class CargaCSV:
-    def __init__(self, caminho_arquivo):
+    def __init__(self, caminho_arquivo,db_manager):
         self.caminho_arquivo = caminho_arquivo
-        self.db = DBManager()
+        self.db = db_manager
 
     def sanitizacao_validacao(self, valor):
         if pd.isna(valor) or valor=="":
@@ -85,9 +85,10 @@ class CargaCSV:
 
 if __name__ == "__main__":
     # NOME DO SEU ARQUIVO NOVO
+    banco_dados=DBManager()
 
     if os.path.exists(caminho_csv):
-        carregador = CargaCSV(caminho_csv)
+        carregador = CargaCSV(caminho_csv,db_manager=banco_dados)
         carregador.carregar_dados_no_data_base()
     else:
         print(f"Arquivo '{caminho_csv}' não encontrado.")

@@ -12,15 +12,16 @@ from engine_busca_pncp.propriedades import Properties
 
 class BaseMonitor(ABC):
 
-    def __init__(self, cliente,palavras_chave,uf):
+    def __init__(self, cliente,palavras_chave,uf,db_manager,palavras_exclusao=None):
         self.cliente = cliente
         self.palavras_chave = [p.lower() for p in palavras_chave]
         self.hoje=datetime.now()
         self.dados_filtrados=[]
         self.ids_a_registrar=[]
         self.uf=uf if uf else ''
-        self.db=DBManager()
+        self.db=db_manager
         self.logger=LogManager(self.db)
+        self.palavras_exclusao=palavras_exclusao or []
 
 
 
@@ -40,6 +41,16 @@ class BaseMonitor(ABC):
             else:
                 query += ' AND uf = %s'
                 params.append(self.uf.upper())
+        if self.palavras_exclusao:
+            condicoes_exclusao=' OR '.join(
+                ["objeto ~* %s" for _ in self.palavras_exclusao]
+            )
+            query+=f' AND NOT ({condicoes_exclusao})'
+            params.extend(
+                [
+                    f'\\y{re.escape(p)}\\y' for p in self.palavras_exclusao
+                ]
+            )
 
         try:
             with self.db.get_connection() as connection:

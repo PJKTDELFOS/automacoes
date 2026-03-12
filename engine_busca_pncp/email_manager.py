@@ -7,16 +7,16 @@ from email import encoders
 from engine_busca_pncp.config import Config
 from engine_busca_pncp.propriedades import Properties
 from engine_busca_pncp.log_manager import LogManager
-from engine_busca_pncp.db_manager import DBManager
+
 
 import os
 
 
 
 class EmailManager:
-    def __init__(self,metodo='gmail'):
+    def __init__(self,db_manager,metodo='gmail'):
         self.metodo=metodo.lower()
-        self.db = DBManager()
+        self.db = db_manager
         self.logger = LogManager(self.db)
         if self.metodo =='resend':
             resend.api_key=Config.RESEND_API_KEY

@@ -8,8 +8,8 @@ from engine_busca_pncp.log_manager import LogManager
 
 
 class ColetorCentral:
-    def __init__(self,dias_padrao=15):
-        self.db = DBManager()
+    def __init__(self,db_manager,dias_padrao=15):
+        self.db = db_manager
         self.log = LogManager(self.db)
         self.endpoint = "https://pncp.gov.br/api/consulta/v1/contratacoes/proposta"
         self.dias_coleta=dias_padrao

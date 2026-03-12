@@ -16,8 +16,8 @@ def envios():
 
     # 1. Inicialização de Gerenciadores
     db = DBManager()
-    mailer_gmail = EmailManager(metodo='gmail')
-    mailer_resend = EmailManager(metodo='resend')
+    mailer_gmail = EmailManager(db_manager=db,metodo='gmail')
+    mailer_resend = EmailManager(db_manager=db,metodo='resend')
 
     # 2. Coleta Centralizada (Cache para evitar múltiplas requisições ao PNCP)
     try:
@@ -28,8 +28,7 @@ def envios():
         except Exception as e:
             print(f' erro ao limpar das linhas {e}')
 
-
-        coletor = ColetorCentral(dias_padrao=15)
+        coletor = ColetorCentral(db_manager=db,dias_padrao=15)
         coletor.coleta_diaria()
     except Exception as e:
         print(f"[!] Erro crítico na coleta: {e}")
@@ -48,26 +47,26 @@ def envios():
 
     lista_de_clientes = [
 
+        # {
+        #     'classe': MonitorClientes,
+        #     'nome': 'Nova Rodovia 2007',
+        #     'email': ['comercial@nrgourmet.com.br', 'Gerencia@nrgourmet.com.br'],
+        #     'palavras': [
+        #         'refeicao', 'alimentacao', 'catering', 'cafe', 'almoco', 'ceia', 'colacao', 'lanche', 'janta',
+        #         'cozinha',
+        #         'copeiragem', 'apoio', 'formula', 'hipo', 'proteina', 'terceirizacao', 'cozinheiro', 'cozinheira',
+        #         'generos', 'alimenticios', 'cafe da manha',
+        #         'desjejum', 'almoço', 'janta', 'cozinheiros', 'lipo', 'generos alimenticios', 'pao', 'paes', 'pão',
+        #         'pães', 'ovos', 'lacteos', 'laticinios', 'comida',
+        #         'alimentos', 'quentinha', 'marmita', 'marmitex', 'preparaçao de alimentos', 'refeições prontas',
+        #         'preparação de refeições'
+        #     ],
+        #     'uf': REGIOES['SUDESTE'][2],  # RJ
+        #     'metodo': 'resend'
+        # },
         {
             'classe': MonitorClientes,
-            'nome': 'Nova Rodovia 2007',
-            'email': ['comercial@nrgourmet.com.br', 'Gerencia@nrgourmet.com.br'],
-            'palavras': [
-                'refeicao', 'alimentacao', 'catering', 'cafe', 'almoco', 'ceia', 'colacao', 'lanche', 'janta',
-                'cozinha',
-                'copeiragem', 'apoio', 'formula', 'hipo', 'proteina', 'terceirizacao', 'cozinheiro', 'cozinheira',
-                'generos', 'alimenticios', 'cafe da manha',
-                'desjejum', 'almoço', 'janta', 'cozinheiros', 'lipo', 'generos alimenticios', 'pao', 'paes', 'pão',
-                'pães', 'ovos', 'lacteos', 'laticinios', 'comida',
-                'alimentos', 'quentinha', 'marmita', 'marmitex', 'preparaçao de alimentos', 'refeições prontas',
-                'preparação de refeições'
-            ],
-            'uf': REGIOES['SUDESTE'][2],  # RJ
-            'metodo': 'resend'
-        },
-        {
-            'classe': MonitorClientes,
-            'nome': 'Albert Pimentel ',
+            'nome': 'teste1',
             'email': ['albert.franca1992@gmail.com'],
             'palavras': [
                 'site', 'sistema', 'pagina web', 'TIC', 'informatica', 'tecnologia da informacao', 'web', 'dados',
@@ -76,18 +75,30 @@ def envios():
             'metodo': 'resend'
         },
         {
-            'classe': MonitorClientes,
-            'nome': 'GS Estofados ',
-            'email': ['gsestofadosdf@hotmail.com'],
+            'classe': MonitorClientes,# sem palavras de exclusao
+            'nome': 'teste2',
+            'email': ['profissional.albert@gmail.com'],
             'palavras': [
-                "Limpeza de sofás", "higienização de sofás", "impermeabilização de sofás",
-                "fabricação de sofás", "reforma de sofás", "manutenção de cadeiras de escritório",
-                "poltronas pós operatória", "aluguel de poltronas pós operatória", "limpeza de carpete" ,
-                "limpeza de tapeçaria em geral"
+               ' Elaboração de projeto','Bim','Arquitetônico','Arquitetura',
+                'Interiores','Paisagismo','Laudo',
             ],
-            'uf': REGIOES['CENTRO_OESTE'][0:2], # RJ
+            'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
         },
+        {
+            'classe': MonitorClientes,#com palavras de exclusao
+            'nome': 'teste3',
+            'email': ['orofissional.albert@gmail.com'],
+            'palavras': [
+                ' Elaboração de projeto','Bim','Arquitetônico','Arquitetura',
+                'Interiores','Paisagismo','Laudo',
+            ],
+            'palavras_exclusao':['obras','realizar obra','fazer obra'],
+            'uf': REGIOES['SUDESTE'][2],  # RJ
+            'metodo': 'resend'
+        },
+
+
 
     ]
 
@@ -99,7 +110,9 @@ def envios():
             # A. Instancia o robô (Arquitetura Limpa: sem e-mail no robô)
             robo = conf['classe'](
                 cliente=conf['nome'],
+                db_manager=db,
                 palavras_chave=conf['palavras'],
+                palavras_exclusao=conf.get('palavras_exclusao',[]),
                 uf=conf['uf']
             )
 

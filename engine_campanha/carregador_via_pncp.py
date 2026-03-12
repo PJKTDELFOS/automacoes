@@ -10,8 +10,8 @@ from utilitarios.validadores import Validadores
 
 
 class CargaPNCP:
-    def __init__(self, dias_coleta=15):
-        self.db_manager = DBManager()
+    def __init__(self,db_manager, dias_coleta=15):
+        self.db_manager = db_manager
         self.endpoint = "https://pncp.gov.br/api/consulta/v1/contratos"
         self.dias_coleta = dias_coleta
 
@@ -131,14 +131,11 @@ class CargaPNCP:
                 )
         if not dados_para_inserir:
             return 0
-        contagem_sucessos=0
         try:
             with self.db_manager.get_connection() as connection:
                 with connection.cursor() as cursor:
-                    for tupla in dados_para_inserir:
-                        cursor.execute(query, tupla)
-                        if cursor.rowcount > 0:
-                            contagem_sucessos+=1
+                    cursor.executemany(query, dados_para_inserir)
+                    contagem_sucessos =len(dados_para_inserir)
                 connection.commit()
             return contagem_sucessos
         except Exception as e:
@@ -147,8 +144,9 @@ class CargaPNCP:
 
 
 if __name__ == "__main__":
+    banco_de_dadods=DBManager()
     # Cria o robô. O padrão é 15 dias, mas para testar agora recomendo colocar 1 ou 3 dias.
-    robo = CargaPNCP(dias_coleta=3)
+    robo = CargaPNCP(db_manager=banco_de_dadods,dias_coleta=3)
 
     # Manda ele trabalhar
     robo.coleta()

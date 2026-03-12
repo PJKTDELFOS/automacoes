@@ -4,8 +4,8 @@ from engine_busca_pncp.db_manager import DBManager
 
 
 class  BuscadorEmails:
-    def __init__(self):
-        self.db_manager = DBManager()
+    def __init__(self,db_manager):
+        self.db_manager = db_manager
         self.brasil_api_url="https://brasilapi.com.br/api/cnpj/v1/{}"
         self.api_cnpj_ws="https://publica.cnpj.ws/cnpj/{}"
 
@@ -13,6 +13,10 @@ class  BuscadorEmails:
         if email and '@' in email:
             if any(x in email.lower() for x in ['contabil', 'contador', 'fiscal', 'escritorio']):
                 print(f"      ⚠️ E-mail de contador ignorado: {email}")
+                return None
+            if len(email) > 255:
+                return None
+            if  email == None  or email=='':
                 return None
             return email.lower()
         return None
@@ -117,5 +121,6 @@ class  BuscadorEmails:
 
 
 if __name__ == "__main__":
-    robo = BuscadorEmails()
+    banco_dados=DBManager()
+    robo = BuscadorEmails(db_manager=banco_dados)
     robo.iniciar()

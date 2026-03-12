@@ -55,7 +55,7 @@ class Disparador_de_emails:
 
           <div class="instruction-box">
             <strong>Como configurar seu teste:</strong><br>
-            Clique no botão abaixo ou responda a este e-mail enviando as <strong>palavras-chave</strong> do seu setor (ex: "manutenção", "obras", "TI", "limpeza").
+            Clique no botão abaixo ou responda a este e-mail enviando as <strong>palavras-chave</strong> do seu setor (ex: "manutenção", "obras", "TI", "limpeza"), e o estados aonde quer buscar.
           </div>
 
           <p>Após o período de teste, a assinatura para manter sua operação automatizada é de apenas:</p>
