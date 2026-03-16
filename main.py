@@ -47,57 +47,33 @@ def envios():
 
     lista_de_clientes = [
 
-        # {
-        #     'classe': MonitorClientes,
-        #     'nome': 'Nova Rodovia 2007',
-        #     'email': ['comercial@nrgourmet.com.br', 'Gerencia@nrgourmet.com.br'],
-        #     'palavras': [
-        #         'refeicao', 'alimentacao', 'catering', 'cafe', 'almoco', 'ceia', 'colacao', 'lanche', 'janta',
-        #         'cozinha',
-        #         'copeiragem', 'apoio', 'formula', 'hipo', 'proteina', 'terceirizacao', 'cozinheiro', 'cozinheira',
-        #         'generos', 'alimenticios', 'cafe da manha',
-        #         'desjejum', 'almoço', 'janta', 'cozinheiros', 'lipo', 'generos alimenticios', 'pao', 'paes', 'pão',
-        #         'pães', 'ovos', 'lacteos', 'laticinios', 'comida',
-        #         'alimentos', 'quentinha', 'marmita', 'marmitex', 'preparaçao de alimentos', 'refeições prontas',
-        #         'preparação de refeições'
-        #     ],
-        #     'uf': REGIOES['SUDESTE'][2],  # RJ
-        #     'metodo': 'resend'
-        # },
         {
             'classe': MonitorClientes,
-            'nome': 'teste1',
+            'nome': 'Nova Rodovia 2007',
+            'email': ['comercial@nrgourmet.com.br', 'Gerencia@nrgourmet.com.br'],
+            'palavras': [
+                'refeicao', 'alimentacao', 'catering', 'cafe', 'almoco', 'ceia', 'colacao', 'lanche', 'janta',
+                'cozinha',
+                'copeiragem', 'apoio', 'formula', 'hipo', 'proteina', 'terceirizacao', 'cozinheiro', 'cozinheira',
+                'generos', 'alimenticios', 'cafe da manha',
+                'desjejum', 'almoço', 'janta', 'cozinheiros', 'lipo', 'generos alimenticios', 'pao', 'paes', 'pão',
+                'pães', 'ovos', 'lacteos', 'laticinios', 'comida',
+                'alimentos', 'quentinha', 'marmita', 'marmitex', 'preparaçao de alimentos', 'refeições prontas',
+                'preparação de refeições'
+            ],
+            'uf': REGIOES['SUDESTE'][2],  # RJ
+            'metodo': 'resend'
+        },
+        {
+            'classe': MonitorClientes,
+            'nome': 'Albert Pimentel',
             'email': ['albert.franca1992@gmail.com'],
             'palavras': [
                 'site', 'sistema', 'pagina web', 'TIC', 'informatica', 'tecnologia da informacao', 'web', 'dados',
             ],
             'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
-        },
-        {
-            'classe': MonitorClientes,# sem palavras de exclusao
-            'nome': 'teste2',
-            'email': ['profissional.albert@gmail.com'],
-            'palavras': [
-               ' Elaboração de projeto','Bim','Arquitetônico','Arquitetura',
-                'Interiores','Paisagismo','Laudo',
-            ],
-            'uf': REGIOES['SUDESTE'][2],  # RJ
-            'metodo': 'resend'
-        },
-        {
-            'classe': MonitorClientes,#com palavras de exclusao
-            'nome': 'teste3',
-            'email': ['orofissional.albert@gmail.com'],
-            'palavras': [
-                ' Elaboração de projeto','Bim','Arquitetônico','Arquitetura',
-                'Interiores','Paisagismo','Laudo',
-            ],
-            'palavras_exclusao':['obras','realizar obra','fazer obra'],
-            'uf': REGIOES['SUDESTE'][2],  # RJ
-            'metodo': 'resend'
-        },
-
+        }
 
 
     ]
