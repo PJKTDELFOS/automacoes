@@ -1,7 +1,7 @@
 import uuid
 from django.contrib.auth.models import User
 from django.db import models
-from django_cryptography.fields import encrypt
+from mirage.fields import EncryptedCharField,EncryptedEmailField
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -21,22 +21,19 @@ class Stakeholder(models.Model):
         ('Interessado', 'Em teste'),
         ('Cliente', 'Cliente'),
         ),
-        verbose_name="Stakeholder",
+        verbose_name="Categoria",
         )
 
     nome_razaosocial=models.CharField(
         max_length=100, blank=False, null=False, verbose_name='Nome / Razão Social'
     )
-    CPF_CNPJ=encrypt(
-        models.CharField(
+    CPF_CNPJ=EncryptedCharField(
         max_length=100, blank=False, null=False, verbose_name='CPF/CNPJ'
     )
+    email=EncryptedEmailField(
+        max_length=100, blank=False, null=False, verbose_name='E-mail'
     )
-    email=encrypt(
-        models.EmailField(
-            max_length=100, blank=False, null=False, verbose_name='E-mail'
-        )
-    )
+
     palavras_chave=ArrayField(
         models.TextField(
             max_length=5000, blank=False, null=False, verbose_name='Palavras chave',
@@ -45,9 +42,9 @@ class Stakeholder(models.Model):
     )
     palavras_exclusao=ArrayField(
         models.TextField(
-            max_length=5000, blank=True, null=True, verbose_name='Palavras chave',
+            max_length=5000, blank=True, null=True, verbose_name='Termos para Exclusão da busca',
             help_text=' digitas as palavra chave ou termos de sua busca separadas por virgula'
-        )
+        ),blank=True,null=True,verbose_name='Termos para Exclusão da busca',help_text=' digitas as palavra chave ou termos de sua busca separadas por virgula'
     )
     UF=ArrayField(
         models.CharField(
@@ -66,13 +63,23 @@ class Stakeholder(models.Model):
             )
         )
     )
-    periodo_busca=models.IntegerField(verbose_name='Alcance em dias da busca')
+
     identificador=models.UUIDField(default=uuid.uuid4, editable=False,unique=True,blank=False,
                                    verbose_name='Identificador',null=False)
     data_cadastro=models.DateTimeField(auto_now_add=True,editable=False,verbose_name='Data de Cadastro',null=False,blank=False)
     data_fim_teste=models.DateTimeField(default=fimteste,verbose_name='Fim do Período de Teste',
-                                        editable=False,null=False,blank=False)
-    ativo=models.BooleanField(default=True,verbose_name='Ativo')
+                                        null=False,blank=False)
+
+
+
+
+    @property
+    def ativo(self):
+        if self.categoria == 'Cliente':
+            return True
+        if self.categoria == 'Interessado':
+            return timezone.now() <= self.data_fim_teste
+        return False
 
 
 

@@ -21,6 +21,7 @@ from django.urls import path,include
 urlpatterns = [
 
     path('', include('appa_bot.urls')),
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls,name='index'),
+
 
 ]
