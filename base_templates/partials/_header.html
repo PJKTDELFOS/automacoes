@@ -2,7 +2,7 @@
     <div class="navbar">
 
         <div style="display: flex; align-items: center; gap: 20px;">
-            <a class="navbar-title" href="{% url 'sistemahorista:tela_inicial' %}" >Teste Estagio</a>
+            <a class="navbar-title" href="{% url '#' %}" >Teste Estagio</a>
 
 
             <a style="font-size: 16px;font-weight: bold" href="{% url 'admin:index' %}" class="menu-link" target="_blank"><b>ADMIN</b></a>
@@ -12,9 +12,9 @@
                 <a href="#" style="padding: 10px 20px; font-size: 16px;">MENU PRINCIPAL ▾</a>
                 <ul class="dropdown-content">
                     <li class="dropdown-sub">
-                        <a href="{% url 'sistemahorista:tabela_funcionarios' %}">FUNCIONARIOS </a>
+                        <a href="{% url '#' %}">FUNCIONARIOS </a>
                         <ul class="dropdown-sub-content">
-                            <li><a href="{% url 'sistemahorista:cadastro_funcionario' %}">CADASTRAR/ATUALIZAR</a></li>
+                            <li><a href="{% url '#' %}">CADASTRAR/ATUALIZAR</a></li>
                         </ul>
                     </li>
 

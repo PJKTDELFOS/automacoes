@@ -94,7 +94,7 @@ class Command(BaseCommand):
                     if sucesso:
                         for id_hash in ids_encontrados:
                             link_db.registro_envio(id_hash,stakeholder['nome'])
-                            self.stdout.write(self.style.SUCCESS("  -> Status salvo no histórico com sucesso."))
+                        self.stdout.write(self.style.SUCCESS("  -> Status salvo no histórico com sucesso."))
                     else:
                         self.stdout.write(self.style.ERROR("  -> Falha ao enviar o e-mail. Tentaremos amanhã."))
                 else:

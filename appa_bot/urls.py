@@ -23,7 +23,9 @@ from.import views
 app_name='appa'
 
 urlpatterns = [
-    path('', views.pagina_inicial, name='pagina_inicial'),
+    path('', views.pagina_inicial_landing_page, name='pagina_inicial'),
+    path('sucesso/', views.pagina_sucesso, name='sucesso'),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

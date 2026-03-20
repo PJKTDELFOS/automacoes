@@ -83,6 +83,58 @@ class Disparador_de_emails:
     """
         return html
 
+    def mensagem_boas_vindas(self, data_fim, palavras, exclusoes, uf, identificador):
+        data_fim_str = data_fim.strftime('%d/%m/%Y')
+        palavras_str = ", ".join([p.upper() for p in palavras]) if palavras else "Nenhuma"
+        exclusoes_str = ", ".join([e.upper() for e in exclusoes]) if exclusoes else "Nenhuma"
+        uf_str = ", ".join([u.upper() for u in uf]) if uf else "Brasil (Nacional)"
+
+        # ajustar depois
+        link_portal = f"https:localhost/{identificador}/"
+
+        html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #2c3e50; color: white; padding: 20px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 22px;">Bem-vindo ao Appa Licitações!</h1>
+                    <p style="margin: 5px 0 0 0;">Seu período de teste começou.</p>
+                </div>
+
+                <div style="padding: 20px;">
+                    <p>Olá, <strong>{self.cliente}</strong>,</p>
+                    <p>Seu cadastro foi concluído com sucesso e o nosso robô já começou a monitorar o PNCP para você.</p>
+
+                    <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #27ae60; margin: 20px 0;">
+                        <h3 style="margin-top: 0; color: #2c3e50;">Resumo da sua Configuração:</h3>
+                        <ul style="margin: 0; padding-left: 20px;">
+                            <li><strong>Vencimento do Teste:</strong> {data_fim_str}</li>
+                            <li><strong>Palavras-chave:</strong> {palavras_str}</li>
+                            <li><strong>Termos Excluídos:</strong> {exclusoes_str}</li>
+                            <li><strong>Regiões (UF):</strong> {uf_str}</li>
+                        </ul>
+                    </div>
+
+                    <h3 style="color: #2c3e50;">🔑 Seu Código de Acesso (Identificador)</h3>
+                    <p>O seu identificador único é a sua chave de acesso ao sistema. Guarde-o com segurança:</p>
+                    <div style="background-color: #e8f4fd; padding: 10px; text-align: center; font-size: 18px; font-weight: bold; border-radius: 5px; color: #3498db;">
+                        {identificador}
+                    </div>
+
+                    <p><strong>Para que serve este código?</strong></p>
+                    <ul>
+                        <li>Acessar o seu <a href="{link_portal}">Portal do Cliente</a> para alterar suas palavras-chave e UFs a qualquer momento.</li>
+                        <li>Será utilizado futuramente para efetivar a sua assinatura e realizar pagamentos.</li>
+                    </ul>
+
+                    <p>Fique de olho na sua caixa de entrada, em breve você começará a receber suas primeiras planilhas de oportunidades!</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        return html
+
     def _enviar_gmail(self, to, assunto, corpo_html):
         msg = MIMEMultipart()
         msg['From'] = Config.GMAIL_EMAIL_FROM

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+
+{%block content%}
+
+<style>
+    .form-container p {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+        text-align: left;
+    }
+    .form-container span.helptext {
+        font-size: 0.8rem;
+        color: #ccc;
+        margin-top: -10px;
+        margin-bottom: 10px;
+    }
+</style>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="message {{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="form-container" style="margin-top: 40px; margin-bottom: 40px;">
+    <h2>Inicie seu Teste de 15 Dias Grátis</h2>
+    <p style="text-align: center; color: #e0e0e0; margin-bottom: 30px;">
+        Preencha seus dados e as palavras-chave do seu setor. O nosso robô começará a buscar licitações para você imediatamente.
+    </p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="formulario-simples">
+            {{ form.as_p }}
+        </div>
+
+        <button type="submit" style="width: 100%; margin-top: 20px; font-weight: bold; font-size: 1.1rem; padding: 12px; background-color: #0d6efd; color: white; border-radius: 8px; border: none; cursor: pointer;">
+            CRIAR MINHA CONTA E TESTAR
+        </button>
+    </form>
+</div>
+
+{% endblock %}
