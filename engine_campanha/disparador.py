@@ -5,12 +5,16 @@ from email.mime.base import MIMEBase
 from email import encoders
 from engine_busca_pncp.config import Config
 from engine_busca_pncp.propriedades import Properties
+import resend
 
 
 class Disparador_de_emails:
     def __init__(self,email,cliente):
         self.email = email
         self.cliente = cliente
+        resend.api_key=Config.RESEND_API_KEY
+
+
 
     def mensagem(self):
         html = f"""
@@ -65,7 +69,7 @@ class Disparador_de_emails:
 
           <div class="dev-section">
             <strong>Especialista Responsável:</strong><br>
-            Meu nome é <strong>Albert Pimentel França</strong>, desenvolvedor com <strong>mais de 10 anos de experiência direta na área de licitações públicas</strong>. 
+            Meu nome é <strong>Albert Pimentel França</strong>, desenvolvedor com <strong>mais de 12 anos de experiência direta na área de licitações públicas</strong>. 
             <br><br>
             Comprometido com a aplicação prática de soluções eficientes, utilizo Python, Django e análise de dados para automatizar processos administrativos. Minha missão é unir <strong>experiência de mercado e tecnologia</strong> para entregar precisão e alta qualidade aos meus clientes.
           </div>
@@ -154,6 +158,23 @@ class Disparador_de_emails:
             print(f'erro {e}')
 
             return False
+
+    def _enviar_resend(self,to,assunto,corpo_html):
+        try:
+            resultado=resend.Emails.send(
+                {
+                    'from': Config.EMAIL_RESEND_FROM,
+                    'to': [to],
+                    'subject': assunto,
+                    'html': corpo_html,
+
+                }
+            )
+            return True
+        except Exception as e:
+            print(f'erro {e}')
+            return False
+
 
 
 

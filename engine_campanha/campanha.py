@@ -43,7 +43,7 @@ def campanha(lista_clientes):
         disparador=Disparador_de_emails(cliente['email'],cliente['nome'])
         mensagem=disparador.mensagem()
         assunto=f"Oportunidade para {cliente['nome']}"
-        envio=disparador._enviar_gmail(cliente['email'],assunto,mensagem)
+        envio=disparador._enviar_resend(cliente['email'],assunto,mensagem)
         if envio:
             print('enviado')
             sucesso+=1
