@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+        <div class="message {{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="form-container" style="margin-top: 80px; text-align: center; max-width: 500px;">
+    <h2>Acessar Meu Painel</h2>
+    <p style="color: #cbd5e1; margin-bottom: 25px;">
+        Cole o seu ID de Acesso abaixo para configurar as suas palavras-chave.
+    </p>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <input 
+            type="text" 
+            name="id_digitado" 
+            placeholder="Ex: 123e4567-e89b-12d3..." 
+            required 
+            style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; background-color: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2);"
+        >
+        
+        <button type="submit" class="btn-primary">
+            ENTRAR NO PAINEL
+        </button>
+    </form>
+</div>
+
+{% endblock %}

@@ -34,5 +34,10 @@ class MainServices:
             print(f"Erro silencioso ao enviar e-mail de boas vindas: {e}")
         return novo_stakeholder
 
+    @staticmethod
+    def atualizar_stakeholder(form):
+        stakeholder = form.save()
+        return stakeholder
+
 
 

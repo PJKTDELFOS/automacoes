@@ -26,6 +26,11 @@ urlpatterns = [
     path('', views.pagina_inicial,name='inicial'),
     path('cadastro/', views.pagina_landing_page, name='pagina_cadastro'),
     path('sucesso/', views.pagina_sucesso, name='sucesso'),
+    path('sucesso/', views.pagina_atualizar_sucesso, name='sucesso_atualizar'),
+
+
+    path('atualizar/<uuid:identificador>/', views.atualizar_parametros, name='atualizar_palavras'),
+    path('acesso-cliente/', views.buscar_clientes, name='buscar_clientes'),
 
 ]
 if settings.DEBUG:

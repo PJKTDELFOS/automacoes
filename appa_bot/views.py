@@ -1,5 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.shortcuts import render,get_object_or_404,redirect
-from .models import Stakeholder,logAcao
+from .models import Stakeholder
 from.forms import StakeholderForm,AtualizarStakeHolderForm
 from django.contrib import messages
 from django.utils import timezone
@@ -15,7 +16,6 @@ from appa_bot.repository import ClienteRepository
 
 
 def pagina_landing_page(request):
-    print("--- INÍCIO DO TESTE DETETIVE ---")
     print("MÉTODO DA REQUISIÇÃO:", request.method)
     if request.method == "POST":
         form = StakeholderForm(request.POST)
@@ -39,6 +39,56 @@ def pagina_landing_page(request):
 def pagina_sucesso(request):
     return render(request,'appa_bot/sucesso_cadastro.html')
 
+def pagina_atualizar_sucesso(request):
+    return render(
+        request,'appa_bot/sucesso_atualizar.html'
+    )
+
 def pagina_inicial(request):
     return render(request,'appa_bot/pagina_inicial.html')
+
+
+def buscar_clientes(request):
+    if request.method=='POST':
+        id_digitado=request.POST.get('id_digitado','').strip()
+
+        if not id_digitado:
+            messages.error(request, "Por favor, cole o seu ID.")
+            return redirect('/')
+
+        try:
+            stakeholder=Stakeholder.objects.get(identificador=id_digitado)
+            return redirect('appa:atualizar_palavras',identificador=stakeholder.identificador)
+        except Stakeholder.DoesNotExist:
+            messages.error(request, "ID não encontrado. Verifique se copiou corretamente.")
+            return redirect('/')
+        except(ValueError, ValidationError):
+            messages.error(request, "Formato de ID inválido.")
+            return redirect('/')
+    return render(
+        request,'appa_bot/acesso_cliente.html'
+    )
+
+def atualizar_parametros(request,identificador):
+    stakeholder=get_object_or_404(Stakeholder,identificador=identificador)
+    if request.method == "POST":
+        form=AtualizarStakeHolderForm(request.POST,instance=stakeholder)
+        if form.is_valid():
+            try:
+                MainServices.atualizar_stakeholder(form)
+                messages.success(request,
+                                 "Suas palavras-chave foram atualizadas com sucesso! O robô já vai usar as novas regras na próxima busca.")
+                return redirect('appa:sucesso_atualizar')
+            except Exception as e:
+                messages.error(request, "Verifique os erros abaixo.")
+    else:
+        form=AtualizarStakeHolderForm(instance=stakeholder)
+    contexto={
+        'form':form,
+        'stakeholder':stakeholder,
+    }
+    return render(
+        request,'appa_bot/atualizar_config.html',context=contexto,
+    )
+
 

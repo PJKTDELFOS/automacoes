@@ -139,6 +139,9 @@ class Disparador_de_emails:
         """
         return html
 
+    def mensagem_atualizacao(self,palavras, exclusoes, uf, identificador):
+        ...
+
     def _enviar_gmail(self, to, assunto, corpo_html):
         msg = MIMEMultipart()
         msg['From'] = Config.GMAIL_EMAIL_FROM
