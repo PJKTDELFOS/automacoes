@@ -4,6 +4,7 @@ from.forms import StakeholderForm,AtualizarStakeHolderForm
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
+from appa_bot.services.main_services import MainServices
 
 from engine_campanha.disparador import Disparador_de_emails
 from appa_bot.repository import ClienteRepository
@@ -13,42 +14,31 @@ from appa_bot.repository import ClienteRepository
 # Create your views here.
 
 
-def pagina_inicial_landing_page(request):
-
+def pagina_landing_page(request):
+    print("--- INÍCIO DO TESTE DETETIVE ---")
+    print("MÉTODO DA REQUISIÇÃO:", request.method)
     if request.method == "POST":
-        form=StakeholderForm(request.POST)
+        form = StakeholderForm(request.POST)
         if form.is_valid():
-
-            novo_stakeholder=form.save(commit=False)
-            novo_stakeholder.categoria='Interessado'
-            novo_stakeholder.data_inicio_teste=timezone.now()
-            novo_stakeholder.data_fim_teste=timezone.now()+timedelta(days=15)
-            novo_stakeholder.save()
-
             try:
-                mensageiro = Disparador_de_emails( novo_stakeholder.email,novo_stakeholder.nome_razaosocial)
-                corpo_email = mensageiro.mensagem_boas_vindas(
-                    data_fim=novo_stakeholder.data_fim_teste,
-                    palavras=novo_stakeholder.palavras_chave,
-                    exclusoes=novo_stakeholder.palavras_exclusao,
-                    identificador=str(novo_stakeholder.identificador),
-                    uf=novo_stakeholder.UF
-                )
-                assunto = "🎉 Bem-vindo ao Appa! Seu teste começou."
-                mensageiro._enviar_gmail(novo_stakeholder.email,assunto, corpo_email)
-
+                MainServices.criar_stakeholders(form)
+                return redirect('appa:sucesso')
             except Exception as e:
-                print(f"Erro ao enviar e-mail de boas vindas: {e}")
-
-            return redirect('appa_bot:sucesso')
-
+                messages.error(request, "Ocorreu um erro interno. Tente novamente.")
+                print(f"Erro na view de cadastro: {e}")
     else:
-        form=StakeholderForm()
+        print("ENTROU NO ELSE (GET)!")
+        form = StakeholderForm()
+        print("O FORM ESTÁ AMARRADO A DADOS (BOUND)?", form.is_bound)
+    return render(request, "appa_bot/landing_page.html", {"form":form})
 
-    return render(
-            request,'appa_bot/landing_page.html', {'form': form}
-        )
 
+
+
+    #
 def pagina_sucesso(request):
     return render(request,'appa_bot/sucesso_cadastro.html')
+
+def pagina_inicial(request):
+    return render(request,'appa_bot/pagina_inicial.html')
 

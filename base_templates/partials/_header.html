@@ -1,61 +1,17 @@
-{% if user.is_authenticated %}
-    <div class="navbar">
+<nav class="navbar">
+    <a href="/" class="navbar-brand">
+        Appa<span>Licitações</span>
+    </a>
 
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <a class="navbar-title" href="{% url '#' %}" >Teste Estagio</a>
+    <div class="navbar-links">
+        <a href="/">Início</a>
+        <a href="{% url 'appa:pagina_cadastro' %}">Teste Grátis</a>
 
-
-            <a style="font-size: 16px;font-weight: bold" href="{% url 'admin:index' %}" class="menu-link" target="_blank"><b>ADMIN</b></a>
-
-
-            <div class="dropdown">
-                <a href="#" style="padding: 10px 20px; font-size: 16px;">MENU PRINCIPAL ▾</a>
-                <ul class="dropdown-content">
-                    <li class="dropdown-sub">
-                        <a href="{% url '#' %}">FUNCIONARIOS </a>
-                        <ul class="dropdown-sub-content">
-                            <li><a href="{% url '#' %}">CADASTRAR/ATUALIZAR</a></li>
-                        </ul>
-                    </li>
-
-
-                    <li class="dropdown-sub">
-                        <a  href="{% url 'sistemahorista:fibonacci' %}">Fibonacci</a>
-
-                    </li>
-                    <li><a href="{% url 'sistemahorista:receber_array ' %}">Receber Array</a></li>
-                </ul>
-            </div>
-
-            <!-- Dropdown Equipe (acesso gerência em diante) -->
-            <div class="dropdown">
-                <a href="{% url 'sistemahorista:tabela_usuarios' %}" style="padding: 10px 20px; font-size: 16px;">EQUIPE ▾</a>
-                <ul class="dropdown-content">
-                    <li><a href="{% url 'sistemahorista:cadastro_usuario' %}"> CADASTRAR EQUIPE</a></li>
-                </ul>
-            </div>
-            <span class="navbar-title">Usuário Logado: {{ user.username }}</span>
-        </div>
-
-
-
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div class="search-bar">
-                <form action="{% url 'sistemahorista:busca_dinamica' %}" method="get" style="display: flex; gap: 10px;">
-                    <input type="text" name="q" placeholder="pesquisar" required
-                           style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
-                    <button type="submit">🔍</button>
-                </form>
-            </div>
-            <a href="{% url 'sistemahorista:logout_sistema' %}" style="padding: 10px 20px; font-size: 16px;">LOGOUT</a>
-
-        </div>
+        {% if user.is_authenticated %}
+            <a href="#" style="color: #ffc107;">Olá, {{ user.username }}</a>
+            <a href="{% url 'admin:index' %}">Painel Admin</a><-- vai ser aonde  fica o  uuid do cliente -->
+        {% else %}
+            <a href="{% url 'admin:index' %}">Login</a> <-- remover -->
+        {% endif %}
     </div>
-{% else %}
-
-    <div class="navbar">
-        <a class="navbar-title" href="#" >YOSEF POSVENDAS</a>
-
-        <a href="{% url 'admin:index' %}" style="padding: 10px 20px; font-size: 16px;">ADMIN</a>
-    </div>
-{% endif %}
+</nav>

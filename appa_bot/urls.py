@@ -23,7 +23,8 @@ from.import views
 app_name='appa'
 
 urlpatterns = [
-    path('', views.pagina_inicial_landing_page, name='pagina_inicial'),
+    path('', views.pagina_inicial,name='inicial'),
+    path('cadastro/', views.pagina_landing_page, name='pagina_cadastro'),
     path('sucesso/', views.pagina_sucesso, name='sucesso'),
 
 ]

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section">
+    <h1>Automatize suas Buscas no PNCP</h1>
+    <p>O motor do <strong>Appa Licitações</strong> vasculha o portal do governo 24h por dia usando Inteligência Artificial e envia as melhores oportunidades diretamente para você.</p>
+</div>
+
+<div class="form-container" style="text-align: center;">
+    <h2>Inicie seu Teste de 15 Dias Grátis</h2>
+    <p style="margin-bottom: 20px; color: #ccc;">Clique no botão abaixo para preencher os seus dados e as palavras-chave.</p>
+
+    <a href="{% url 'appa:pagina_cadastro' %}" class="btn-primary" style="text-decoration: none; display: inline-block;">
+        IR PARA O FORMULÁRIO DE CADASTRO
+    </a>
+</div>
+{% endblock %}
