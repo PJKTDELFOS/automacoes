@@ -73,6 +73,17 @@ def envios():
             ],
             'uf': REGIOES['SUDESTE'][2],  # RJ
             'metodo': 'resend'
+        },
+        {
+            'classe': MonitorClientes,
+            'nome': 'Cliente Teste 1',
+            'email': ['orofissional.albert@gmail.com'],
+            'palavras': [
+                'chiller','ar-condicionado','climatização','manutenção ar-condicionado','refrigeração','climatizar',
+
+            ],
+            'uf': [],  # RJ
+            'metodo': 'resend'
         }
 
 
