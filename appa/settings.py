@@ -152,9 +152,7 @@ AXES_FAILURE_LIMIT = 10  # tentativas de login permitidas
 AXES_COOLOFF_TIME = 0.1  # em horas; tempo que o IP ficará bloqueado
 AXES_LOCK_OUT_AT_FAILURE = True
 
-# LOGIN_URL = 'sistemahorista:login_sistema'
-# LOGIN_REDIRECT_URL = 'sistemahorista:tela_inicial'
-# LOGOUT_REDIRECT_URL = 'sistemahorista:login_sistema'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
