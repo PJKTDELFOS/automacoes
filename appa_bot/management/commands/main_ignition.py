@@ -18,91 +18,103 @@ class Command(BaseCommand):
         self.stdout.write(
             "Limpando pasta temporária de planilhas..."
         )
-        Cleardirectory()
-        self.stdout.write("Conectando ao Banco de Dados Central...")
-        link_db = DBManager()
-        mensageiro=EmailManager(db_manager=link_db,metodo='resend')
-
-        self.stdout.write(self.style.WARNING("\n[ETAPA 1] Faxina Diária do Banco de Dados..."))
         try:
-            linhas_removidas=link_db.limpar_db_datas_vencidas()
-            if linhas_removidas and linhas_removidas >0:
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"  -> Sucesso! {linhas_removidas} licitações vencidas apagadas."
-                    )
-                )
-            else:
-                self.stdout.write("  -> Nenhuma licitação vencida para apagar hoje.")
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f"  -> Erro ao tentar limpar o banco: {e}"))
-
-        self.stdout.write(
-            self.style.WARNING(
-                "\n[ETAPA 2] Coletando novos editais do PNCP..."
-            )
-        )
-        coletor=ColetorCentral(db_manager=link_db,dias_padrao=15)
-        coletor.coleta_diaria()
-
-        self.stdout.write(
-            self.style.WARNING(
-                "\n[ETAPA 3] Lendo regras de negócio do Django..."
-            )
-        )
-        stakeholders_ativos=ClienteRepository.obter_clientes_ativos()
-        if not stakeholders_ativos:
-            self.stdout.write(
-                self.style.ERROR(
-                    "Nenhum cliente ativo encontrado hoje. Encerrando."
-                )
-            )
-            return
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"-> {len(stakeholders_ativos)} clientes na fila de processamento.")
-            )
-        self.stdout.write(
-            self.style.WARNING(
-                "\n[ETAPA 4] Iniciando o Match e Envio de E-mails..."
-            )
-        )
-        for stakeholder in stakeholders_ativos:
-            self.stdout.write(
-                f"\nProcessando cliente: {stakeholder['nome']}"
-            )
+            Cleardirectory()
+            self.stdout.write("Conectando ao Banco de Dados Central...")
             try:
-                monitor=MonitorClientes(
-                    cliente=stakeholder['nome'],
-                    palavras_chave=stakeholder['palavras_chave'],
-                    uf=stakeholder['uf'],
-                    db_manager=link_db,
-                    palavras_exclusao=stakeholder.get('palavras_exclusao',[]),
-                )
-                caminho_planilha,ids_encontrados=monitor.executar()
-                if caminho_planilha and monitor.dados_filtrados:
+                link_db = DBManager()
+            except ConnectionError as e:
+                self.stdout.write(self.style.ERROR(f"Falha ao conectar ao banco: {e}"))
+                return
+
+            mensageiro=EmailManager(db_manager=link_db,metodo='resend')
+
+            self.stdout.write(self.style.WARNING("\n[ETAPA 1] Faxina Diária do Banco de Dados..."))
+            try:
+                linhas_removidas=link_db.limpar_db_datas_vencidas()
+                if linhas_removidas and linhas_removidas >0:
                     self.stdout.write(
-                    self.style.SUCCESS(f"  -> {len(ids_encontrados)} licitações novas encontradas! Disparando e-mail...")
+                        self.style.SUCCESS(
+                            f"  -> Sucesso! {linhas_removidas} licitações vencidas apagadas."
+                        )
                     )
-                    sucesso=mensageiro.enviar(
-                        cliente_dados=stakeholder,
-                        df_resultados=monitor.dados_filtrados,
+                else:
+                    self.stdout.write("  -> Nenhuma licitação vencida para apagar hoje.")
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f"  -> Erro ao tentar limpar o banco: {e}"))
+
+            self.stdout.write(
+                self.style.WARNING(
+                    "\n[ETAPA 2] Coletando novos editais do PNCP..."
+                )
+            )
+            #para testes do envio do email comentar aqui
+            coletor=ColetorCentral(db_manager=link_db,dias_padrao=15)
+            coletor.coleta_diaria()
+
+            self.stdout.write(
+                self.style.WARNING(
+                    "\n[ETAPA 3] Lendo regras de negócio do Django..."
+                )
+            )
+            stakeholders_ativos=ClienteRepository.obter_clientes_ativos()
+            if not stakeholders_ativos:
+                self.stdout.write(
+                    self.style.ERROR(
+                        "Nenhum cliente ativo encontrado hoje. Encerrando."
+                    )
+                )
+                return
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"-> {len(stakeholders_ativos)} clientes na fila de processamento.")
+                )
+            self.stdout.write(
+                self.style.WARNING(
+                    "\n[ETAPA 4] Iniciando o Match e Envio de E-mails..."
+                )
+            )
+            for stakeholder in stakeholders_ativos:
+                self.stdout.write(
+                    f"\nProcessando cliente: {stakeholder['nome']}"
+                )
+                try:
+                    monitor=MonitorClientes(
+                        cliente=stakeholder['nome'],
                         palavras_chave=stakeholder['palavras_chave'],
                         uf=stakeholder['uf'],
-                        anexo_path=caminho_planilha
+                        db_manager=link_db,
+                        palavras_exclusao=stakeholder.get('palavras_exclusao',[]),
                     )
-                    if sucesso:
-                        for id_hash in ids_encontrados:
-                            link_db.registro_envio(id_hash,stakeholder['nome'])
-                        self.stdout.write(self.style.SUCCESS("  -> Status salvo no histórico com sucesso."))
+                    caminho_planilha,ids_encontrados=monitor.executar()
+                    if caminho_planilha and monitor.dados_filtrados:
+                        self.stdout.write(
+                        self.style.SUCCESS(f"  -> {len(ids_encontrados)} licitações novas encontradas! Disparando e-mail:{stakeholder['email']}")
+                        )
+                        sucesso=mensageiro.enviar(
+                            cliente_dados=stakeholder,
+                            df_resultados=monitor.dados_filtrados,
+                            palavras_chave=stakeholder['palavras_chave'],
+                            uf=stakeholder['uf'],
+                            anexo_path=caminho_planilha
+                        )
+                        if sucesso:
+                            for id_hash in ids_encontrados:
+                                link_db.registro_envio(id_hash,stakeholder['nome'])
+                            self.stdout.write(self.style.SUCCESS("  -> Status salvo no histórico com sucesso."))
+                        else:
+                            self.stdout.write(self.style.ERROR("  -> Falha ao enviar o e-mail. Tentaremos amanhã."))
                     else:
-                        self.stdout.write(self.style.ERROR("  -> Falha ao enviar o e-mail. Tentaremos amanhã."))
-                else:
-                    self.stdout.write("  -> Nenhuma licitação nova para este cliente hoje.")
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"  -> Erro crítico ao processar cliente {stakeholder['nome']}: {e}"))
-                continue
-        self.stdout.write(self.style.SUCCESS("\n=== Processo Finalizado com Sucesso! ==="))
+                        self.stdout.write("  -> Nenhuma licitação nova para este cliente hoje.")
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f"  -> Erro crítico ao processar cliente {stakeholder['nome']}: {e}"))
+                    continue
+            self.stdout.write(self.style.SUCCESS("\n=== Processo Finalizado com Sucesso! ==="))
+        finally:
+            self.stdout.write("Limpando planilhas temporárias pós-envio...")
+            Cleardirectory()
+
+
 
 
 

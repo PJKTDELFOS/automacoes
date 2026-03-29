@@ -14,4 +14,4 @@ services:
     # Como o seu PostgreSQL já está rodando direto no Linux e não dentro do Docker,
     # você vai precisar descomentar (tirar o #) da linha abaixo quando for
     # colocar isso em produção, para o Docker conseguir enxergar o seu banco.
-    network_mode: "host"
+#    network_mode: "host"

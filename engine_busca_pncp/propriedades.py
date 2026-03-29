@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
+import os,re
 from datetime import datetime
 
 
@@ -75,16 +75,25 @@ class Properties:
 
     @staticmethod
     def gerar_nome_arquivo(cliente):
+
         data_str = datetime.now().strftime("%d_%m_%Y")
 
-        nome_limpo = cliente.replace(" ", "_").replace("&", "e").lower()
-        return f"{Properties.FILE_PREFIX}_{nome_limpo}_{data_str}{Properties.FILE_EXTENSION}"
+        nome_limpo = re.sub(
+            r'[^a-zA-Z0-9_]','_',
+            cliente.lower()
+        )
+        nome_arquivo=f'{Properties.FILE_PREFIX}_{nome_limpo}_{data_str}{Properties.FILE_EXTENSION}'
+        return nome_arquivo
 
     @staticmethod
     def get_temp_path(nome_arquivo):
-        # Retorna o caminho completo: temp_planilhas/nome_do_arquivo.xlsx
-        return os.path.join(Properties.TEMP_FOLDER, nome_arquivo)
-
+        base=os.path.abspath(Properties.TEMP_FOLDER)
+        caminho=os.path.abspath(
+            os.path.join(base, nome_arquivo)
+        )
+        if not caminho.startswith(base+os.sep):
+            raise ValueError(f"Nome de cliente inválido: tentativa de path traversal detectada")
+        return caminho
 
 
 

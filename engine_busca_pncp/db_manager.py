@@ -13,7 +13,9 @@ class DBManager:
             'user': Config.user,
             'password': Config.password,
             'host': Config.host,
-            'port': Config.port
+            'port': Config.port,
+            'client_encoding':'utf8',
+
         }
         try:
             self.criar_estrutura_inicial()
@@ -23,6 +25,7 @@ class DBManager:
 
     def get_connection(self):
         return psycopg2.connect(**self.db_params)
+
 
     def criar_estrutura_inicial(self):
         # Usamos uma conexão temporária para criar as tabelas
