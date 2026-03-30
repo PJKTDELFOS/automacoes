@@ -1,7 +1,7 @@
 import os
-
+from psycopg2 import pool
 import psycopg2
-from psycopg2 import extras
+from contextlib import contextmanager
 from dotenv import load_dotenv
 from engine_busca_pncp.config import Config
 load_dotenv()
@@ -14,26 +14,35 @@ class DBManager:
             'password': Config.password,
             'host': Config.host,
             'port': Config.port,
-            'client_encoding':'utf8',
 
         }
+        self.pool=pool.ThreadedConnectionPool(
+            minconn=1,
+            maxconn=10,
+            **self.db_params,
+            client_encoding='UTF8',
+            connect_timeout=10
+        )
+
         try:
             self.criar_estrutura_inicial()
             print(" Conexão PostgreSQL OK e estrutura verificada.")
         except Exception as e:
             raise ConnectionError(f"Não foi possível conectar ao banco de dados: {e}")
 
+    @contextmanager
     def get_connection(self):
-        return psycopg2.connect(**self.db_params)
+        conn=self.pool.getconn()
+        try:
+            yield conn
+        finally:
+            self.pool.putconn(conn)
 
 
     def criar_estrutura_inicial(self):
-        # Usamos uma conexão temporária para criar as tabelas
-        conn = self.get_connection()
-        conn.autocommit = True # Importante para comandos CREATE
-        try:
+        with self.get_connection() as conn:
+            conn.autocommit = True # Importante para comandos CREATE
             with conn.cursor() as cur:
-                # 1. Tabela de Dados Brutos
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS public.pncp_dados_brutos (
                         id SERIAL PRIMARY KEY,
@@ -58,8 +67,6 @@ class DBManager:
                     CREATE INDEX IF NOT EXISTS idx_objeto_busca_texto 
                     ON public.pncp_dados_brutos USING GIN (to_tsvector('portuguese', objeto));
                 """)
-
-
 
                 # 2. Tabela de Histórico de Envios
                 cur.execute("""
@@ -109,12 +116,12 @@ class DBManager:
 
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_logs_cliente ON public.logs_bot_pncp(cliente);")
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_logs_data ON public.logs_bot_pncp(timestamp_log);")
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_status_busca ON public.pncp_leads_brutos(status_enriquecimento);")
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_status_campanha ON public.pncp_leads_brutos(status_envio_campanha);")
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_razao_social_busca ON public.pncp_leads_brutos(razao_social);")
-
-        finally:
-            conn.close()
+                cur.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_status_busca ON public.pncp_leads_brutos(status_enriquecimento);")
+                cur.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_status_campanha ON public.pncp_leads_brutos(status_envio_campanha);")
+                cur.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_razao_social_busca ON public.pncp_leads_brutos(razao_social);")
 
     def ja_enviado(self,identificador,cliente):
         try:

@@ -10,7 +10,7 @@ class LogManager:
     def registro(self,cliente,etapa,nivel,codigo,mensagem,erro_bruto=None):
         stack_trace=None
         if erro_bruto:
-            stack_trace=traceback.format_exc()
+            stack_trace=f"{type(erro_bruto).__name__}: {str(erro_bruto)}"
         query = '''
         INSERT INTO public.logs_bot_pncp(cliente,etapa,nivel,codigo_erro,mensagem,stack_trace)
         VALUES(%s,%s,%s,%s,%s,%s)
