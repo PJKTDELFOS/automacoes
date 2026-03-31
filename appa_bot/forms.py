@@ -16,6 +16,13 @@ class StakeholderForm(forms.ModelForm):
             'UF':'UF'
         }
 
+        widgets={
+            'palavras_chave':forms.Textarea(attrs={'class':'form-control',
+                                                   'rows':6,
+                                                   'placeholder': 'Digite as palavras-chave separadas por vírgula...'}),
+            'email':forms.EmailInput(attrs={'class':'form-control',})
+        }
+
     def __init__(self, *args, **kwargs):
         temp_data=None
         use_args=None
@@ -53,6 +60,12 @@ class AtualizarStakeHolderForm(forms.ModelForm):
             'palavras_chave': 'Palavra Chave',
             'palavras_exclusao': 'Palavras para nao pesquisar',
             'UF': 'UF'
+        }
+        widgets = {
+            'palavras_chave': forms.Textarea(attrs={'class': 'form-control',
+                                                    'rows': 6,
+                                                    'placeholder': 'Digite as palavras-chave separadas por vírgula...'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', })
         }
 
     def __init__(self, *args, **kwargs):
