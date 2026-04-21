@@ -53,7 +53,7 @@ class ColetorCentral:
                 dados = None
 
                 # LOOP DE RESILIÊNCIA (TENTATIVAS)
-                for tentativa in range(1, 10):  # Tenta até 3 vezes
+                for tentativa in range(1, 10):  # Tenta até 9 vezes
                     try:
                         # Timeout de 30s evita que o bot fique travado se a rede oscilar
                         response = requests.get(self.endpoint, params=params, headers=headers, timeout=30)
