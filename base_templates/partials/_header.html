@@ -12,7 +12,7 @@
             <a href="{% url 'admin:index' %}">Painel Admin</a>
         {% else %}
             {% if stakeholder %}
-                <a href="{% url 'appa:atualizar_palavras' identificador=stakeholder.identificador %}" style="color: #ffc107;">Meu Painel</a>
+                <a href="{% url 'appa:atualiza_palavras' identificador=stakeholder.identificador %}" style="color: #ffc107;">Meu Painel</a>
             {% else %}
                 <a href="{% url 'appa:buscar_clientes' %}">Já sou Cliente</a>
             {% endif %}
