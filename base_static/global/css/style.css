@@ -35,6 +35,7 @@ body {
     line-height: 1.5;
     color: var(--text-light);
     min-height: 100vh;
+    padding-bottom:100px;
     /* Imagem de fundo deve ser declarada no HTML ou aqui.
        Usei um fallback escuro caso a imagem demore a carregar */
     background-color: var(--background-dark);
@@ -248,15 +249,24 @@ textarea {
     resize: vertical; /* Impede que o usuário alargue a caixa para os lados */
 }
 
+/* Footer fixado no rodapé da página */
 .main-footer {
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--glass-border);
-    padding: 0.1rem 0;
-    margin-top: 1rem;
+    padding: 20px 0;
     color: var(--text-light);
     text-align: center;
     box-shadow: var(--glass-shadow);
+
+    /* Fixa o footer na parte inferior da viewport, sem precisar rolar */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    /* Garante que fique acima de outros elementos */
+    z-index: 100;
 }
 
 .footer-content {
