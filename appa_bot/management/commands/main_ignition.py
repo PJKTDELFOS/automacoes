@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from appa_bot.repository import ClienteRepository
-
+import time
 from clear_dir import Cleardirectory
 from clientes.clientes import MonitorClientes
 from engine_busca_pncp.coletor_central import ColetorCentral
@@ -50,13 +50,22 @@ class Command(BaseCommand):
             )
             #para testes do envio do email comentar aqui
             coletor=ColetorCentral(db_manager=link_db,dias_padrao=15)
-            coletor.coleta_diaria()
+            coleta_diaria_atualizada=coletor.coleta_diaria()
+            if not coleta_diaria_atualizada:
+                self.stdout.write(self.style.HTTP_INFO(
+                    "\n[!] Coleta incompleta. Aguardando 60s para uma segunda tentativa..."
+                ))
+                time.sleep(60)
+                coleta_diaria_atualizada=coletor.coleta_diaria()
+            if not coleta_diaria_atualizada:
+                self.stdout.write(self.style.ERROR(
+                    "\n[!] A coleta falhou após retentativa. Abortando envio para garantir integridade."))
+                return
 
-            self.stdout.write(
-                self.style.WARNING(
-                    "\n[ETAPA 3] Lendo regras de negócio do Django..."
-                )
-            )
+
+
+
+            self.stdout.write(self.style.SUCCESS("\n[OK] Base íntegra. Iniciando Etapa 3..."))
             stakeholders_ativos=ClienteRepository.obter_clientes_ativos()
             if not stakeholders_ativos:
                 self.stdout.write(

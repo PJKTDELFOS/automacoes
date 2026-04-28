@@ -38,7 +38,7 @@ class DBManager:
         finally:
             self.pool.putconn(conn)
 
-
+#criaçao das tabelas
     def criar_estrutura_inicial(self):
         with self.get_connection() as conn:
             conn.autocommit = True # Importante para comandos CREATE
@@ -113,6 +113,21 @@ class DBManager:
                             );
                     """
                 )
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS public.controle_coleta_paginas_pncp(
+                    id serial primary key,
+                    data_coleta DATE not null,
+                    numero_pagina integer not null ,
+                    status VARCHAR(20) default 'PENDENTE',
+                    tentativas integer default 0,
+                    ultima_resposta_http  integer,
+                    atualizado_em timestamp default current_timestamp,
+                    unique (data_coleta, numero_pagina)
+                    
+                    );
+                    """
+                )
 
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_logs_cliente ON public.logs_bot_pncp(cliente);")
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_logs_data ON public.logs_bot_pncp(timestamp_log);")
@@ -123,6 +138,7 @@ class DBManager:
                 cur.execute(
                     "CREATE INDEX IF NOT EXISTS idx_razao_social_busca ON public.pncp_leads_brutos(razao_social);")
 
+#controle de atualizaçao das licitações no banco de dados
     def ja_enviado(self,identificador,cliente):
         try:
             with self.get_connection() as connection:
@@ -135,6 +151,7 @@ class DBManager:
         except Exception as e:
             print(f' erro ao consultar DB {e}')
             return True
+
 
     def registro_envio(self,identificador,cliente):
         querry="""INSERT INTO public.historico_licitacoes (identificador_pncp, cliente) VALUES (%s, %s)
@@ -153,6 +170,7 @@ class DBManager:
         except Exception as e:
             print(f' erro ao consultar DB {e}')
 
+#campanha
     def get_leads_para_enriquecimento(self,limite=50):
         query="""
         SELECT cnpj_cpf,razao_social from public.pncp_leads_brutos 
@@ -239,7 +257,7 @@ class DBManager:
         except Exception as e:
             print(f"Erro status campanha {cnpj}: {e}")
 
-
+#limpeza do db da tabela de licitações
     def limpar_db_datas_vencidas(self):
         query='''
         DELETE FROM public.pncp_dados_brutos
@@ -258,6 +276,79 @@ class DBManager:
         except Exception as e:
             print(f' erro ao limpar das linhas {e}')
             return 0
+
+#controle de paginas diarias para atualizaçao e envio
+    def registrar_mapeamento_diario_PNCP(self, data_coleta, total_paginas):
+        if not total_paginas or total_paginas < 0:
+            return
+        querry = """
+        INSERT INTO public.controle_coleta_paginas_pncp (data_coleta, numero_pagina) VALUES (%s, %s)
+         ON CONFLICT (data_coleta, numero_pagina) DO NOTHING;
+
+        """
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    dados = [(data_coleta, p) for p in range(1, total_paginas + 1)]
+                    cursor.executemany(querry, dados)
+                connection.commit()
+                print(f"[DB] Mapeamento concluído: {total_paginas} páginas registradas para {data_coleta}.")
+        except Exception as e:
+            print(f"Erro ao registrar mapeamento: {e}")
+
+    def get_proxima_pagina_PNCP(self, data_coleta):
+        query = """
+        SELECT id,numero_pagina from public.controle_coleta_paginas_pncp
+        WHERE data_coleta = %s
+        AND status in ('PENDENTE', 'ERRO')
+        and tentativas < 10
+        order by numero_pagina asc
+        limit 1
+        """
+
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, (data_coleta,))
+                    res = cursor.fetchone()
+                    if res:
+                        return {'id': res[0], 'numero_pagina': res[1]}
+                    return None
+        except Exception as e:
+            print(f"Erro ao buscar próxima página: {e}")
+            return None
+
+    def atualizar_status_tarefa_PNCP(self, tarefa_id, status, code=None):
+        query = """
+        update public.controle_coleta_paginas_pncp
+        set status = %s,
+            ultima_resposta_http = %s,
+            tentativas = tentativas + 1,
+            atualizado_em = NOW()
+        where id = %s
+        """
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, (status, code, tarefa_id))
+                connection.commit()
+        except Exception as e:
+            print(f"Erro ao atualizar status da tarefa {tarefa_id}: {e}")
+
+    def verificar_conclusao_dia_PNCP(self, data_coleta):
+        query = """
+        select count(*) from public.controle_coleta_paginas_pncp
+        where data_coleta = %s and status != 'CONCLUIDO'
+        """
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, (data_coleta,))
+                    pendentes = cursor.fetchone()[0]
+                    return pendentes == 0
+        except Exception as e:
+            print(f"Erro no check de conclusão: {e}")
+            return False
 
 
 
