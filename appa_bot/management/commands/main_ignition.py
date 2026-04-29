@@ -56,10 +56,14 @@ class Command(BaseCommand):
             hoje = datetime.now()
             data_referencia = hoje.date()
             tarefa = link_db.get_proxima_pagina_PNCP(data_referencia)
+            if tarefa is None:
+                self.stdout.write(self.style.SUCCESS("[+] Tudo pronto! Nenhuma página restando."))
+                return
             num_pagina = tarefa['numero_pagina']
             coletor = ColetorCentral(db_manager=link_db, dias_padrao=15)
-            coleta_diaria_atualizada = coletor.coleta_diaria()
             try:
+                coleta_diaria_atualizada = coletor.coleta_diaria()
+
                 if not coleta_diaria_atualizada:
                     self.stdout.write(self.style.HTTP_INFO(
                         "\n[!] Coleta incompleta. Aguardando 60s para uma segunda tentativa..."
