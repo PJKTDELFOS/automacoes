@@ -35,6 +35,14 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("\n[ETAPA 1] Faxina Diária do Banco de Dados..."))
             try:
                 linhas_removidas=link_db.limpar_db_datas_vencidas()
+                paginas_reiniciadas=link_db.reset_paginas_falhadas()
+                if paginas_reiniciadas and paginas_reiniciadas>0:
+                    self.stdout.write(
+                        self.style.SUCCESS(
+                            f"  -> Sucesso! {paginas_reiniciadas} paginas que foram reprocessadas do dia anterior."
+                        )
+                    )
+
                 if linhas_removidas and linhas_removidas >0:
                     self.stdout.write(
                         self.style.SUCCESS(
@@ -43,6 +51,8 @@ class Command(BaseCommand):
                     )
                 else:
                     self.stdout.write("  -> Nenhuma licitação vencida para apagar hoje.")
+                    self.stdout.write("  -> Nenhuma pagina para reprocessar hoje.")
+
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"  -> Erro ao tentar limpar o banco: {e}"))
 
@@ -52,6 +62,7 @@ class Command(BaseCommand):
                 )
             )
             #para testes do envio do email comentar aqui
+
 
             hoje = datetime.now()
             data_referencia = hoje.date()
@@ -75,7 +86,7 @@ class Command(BaseCommand):
                         "\n[!] A coleta falhou após retentativa. Abortando envio para garantir integridade."))
                     return
             except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-                print(print(f"[!] Erro de conexão na página {num_pagina}: {e}"))
+                print(f"[!] Erro de conexão na página {num_pagina}: {e}")
 
 
 

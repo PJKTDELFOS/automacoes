@@ -350,6 +350,28 @@ class DBManager:
             print(f"Erro no check de conclusão: {e}")
             return False
 
+    def reset_paginas_falhadas(self):
+        querry="""
+        update public.controle_coleta_paginas_pncp
+        set status ='PENDENTE',
+            tentativas = 0
+        where tentativas >= 10
+        and status= 'ERRO'
+        """
+        try:
+            with self.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(querry)
+                    linhas_afetadas=cursor.rowcount
+                connection.commit()
+                if linhas_afetadas>0:
+                    print(
+                        f"[🔄] Reset de Erros: {linhas_afetadas} páginas voltaram para a fila de processamento."
+                    )
+        except Exception as e:
+            print(f"[-] Erro ao resetar páginas falhadas: {e}")
+            return 0
+
 
 
 
