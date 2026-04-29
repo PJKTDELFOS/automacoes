@@ -6,10 +6,13 @@ from clientes.clientes import MonitorClientes
 from engine_busca_pncp.coletor_central import ColetorCentral
 from engine_busca_pncp.db_manager import DBManager
 from engine_busca_pncp.email_manager import EmailManager
+import requests
+from datetime import datetime, timedelta
 from engine_busca_pncp.propriedades import Properties
 
 
 class Command(BaseCommand):
+
     help = 'Orquestra a coleta do PNCP, cruza com os clientes ativos do Django e envia e-mails.'
     def handle(self, *args, **kwargs):
         self.stdout.write(
@@ -49,18 +52,26 @@ class Command(BaseCommand):
                 )
             )
             #para testes do envio do email comentar aqui
-            coletor=ColetorCentral(db_manager=link_db,dias_padrao=15)
-            coleta_diaria_atualizada=coletor.coleta_diaria()
-            if not coleta_diaria_atualizada:
-                self.stdout.write(self.style.HTTP_INFO(
-                    "\n[!] Coleta incompleta. Aguardando 60s para uma segunda tentativa..."
-                ))
-                time.sleep(60)
-                coleta_diaria_atualizada=coletor.coleta_diaria()
-            if not coleta_diaria_atualizada:
-                self.stdout.write(self.style.ERROR(
-                    "\n[!] A coleta falhou após retentativa. Abortando envio para garantir integridade."))
-                return
+
+            hoje = datetime.now()
+            data_referencia = hoje.date()
+            tarefa = link_db.get_proxima_pagina_PNCP(data_referencia)
+            num_pagina = tarefa['numero_pagina']
+            coletor = ColetorCentral(db_manager=link_db, dias_padrao=15)
+            coleta_diaria_atualizada = coletor.coleta_diaria()
+            try:
+                if not coleta_diaria_atualizada:
+                    self.stdout.write(self.style.HTTP_INFO(
+                        "\n[!] Coleta incompleta. Aguardando 60s para uma segunda tentativa..."
+                    ))
+                    time.sleep(60)
+                    coleta_diaria_atualizada = coletor.coleta_diaria()
+                if not coleta_diaria_atualizada:
+                    self.stdout.write(self.style.ERROR(
+                        "\n[!] A coleta falhou após retentativa. Abortando envio para garantir integridade."))
+                    return
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                print(print(f"[!] Erro de conexão na página {num_pagina}: {e}"))
 
 
 
