@@ -63,15 +63,15 @@ class Command(BaseCommand):
             )
             #para testes do envio do email comentar aqui
 
-
-            hoje = datetime.now()
-            data_referencia = hoje.date()
-            tarefa = link_db.get_proxima_pagina_PNCP(data_referencia)
-            if tarefa is None:
-                self.stdout.write(self.style.SUCCESS("[+] Tudo pronto! Nenhuma página restando."))
-                return
-            num_pagina = tarefa['numero_pagina']
+            # hoje = datetime.now()
+            # data_referencia = hoje.date()
+            # tarefa = link_db.get_proxima_pagina_PNCP(data_referencia)
+            # if tarefa is None:
+            #     self.stdout.write(self.style.SUCCESS("[+] Tudo pronto! Nenhuma página restando."))
+            #     return
+            # num_pagina = tarefa['numero_pagina']
             coletor = ColetorCentral(db_manager=link_db, dias_padrao=15)
+
             try:
                 coleta_diaria_atualizada = coletor.coleta_diaria()
 
@@ -86,7 +86,7 @@ class Command(BaseCommand):
                         "\n[!] A coleta falhou após retentativa. Abortando envio para garantir integridade."))
                     return
             except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-                print(f"[!] Erro de conexão na página {num_pagina}: {e}")
+                print(f"[!] Erro de conexão na página : {e}")
 
 
 
