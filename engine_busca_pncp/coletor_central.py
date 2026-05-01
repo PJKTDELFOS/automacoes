@@ -50,7 +50,7 @@ class ColetorCentral:
                 'pagina':1,
                 'tamanhoPagina':50,
             }
-            resp=self.session.get(self.endpoint,params=params_inicial,timeout=120)
+            resp=self.session.get(self.endpoint,params=params_inicial,timeout=30)
             if resp.status_code == 200:
                 total_paginas=resp.json().get('totalPaginas',1)
                 self.db.registrar_mapeamento_diario_PNCP(data_referencia,total_paginas)
@@ -73,7 +73,7 @@ class ColetorCentral:
                 }
 
                 try:
-                    response=self.session.get(self.endpoint,params=params,timeout=120)
+                    response=self.session.get(self.endpoint,params=params,timeout=30)
                     if response.status_code == 200:
                         try:
                             dados=response.json()
