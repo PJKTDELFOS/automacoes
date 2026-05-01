@@ -55,7 +55,7 @@ class ColetorCentral:
                 total_paginas=resp.json().get('totalPaginas',1)
                 self.db.registrar_mapeamento_diario_PNCP(data_referencia,total_paginas)
             else:
-                print(f"[-] Falha ao acessar API para mapeamento: {resp.status_code}")
+                print(f"[-] Falha ao acessar API para mapeamento: {resp.status_code}, ")
                 return
 
             while True:
@@ -69,11 +69,11 @@ class ColetorCentral:
                 params={
                     'dataFinal': data_final_api,
                     'pagina': num_pagina,
-                    'tamanhoPagina': 50,
+                    'tamanhoPagina': 10,
                 }
 
                 try:
-                    response=self.session.get(self.endpoint,params=params,timeout=60)
+                    response=self.session.get(self.endpoint,params=params,timeout=180)
                     if response.status_code == 200:
                         try:
                             dados=response.json()
