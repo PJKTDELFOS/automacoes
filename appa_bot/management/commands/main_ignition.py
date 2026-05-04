@@ -87,6 +87,7 @@ class Command(BaseCommand):
                     return
             except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
                 print(f"[!] Erro de conexão na página : {e}")
+                return
 
 
 
