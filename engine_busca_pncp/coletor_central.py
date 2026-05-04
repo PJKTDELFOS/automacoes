@@ -48,7 +48,7 @@ class ColetorCentral:
             params_inicial={
                 'dataFinal': data_final_api,
                 'pagina':1,
-                'tamanhoPagina':50,
+                'tamanhoPagina':10,
             }
             resp=self.session.get(self.endpoint,params=params_inicial,timeout=60)
             if resp.status_code == 200:
