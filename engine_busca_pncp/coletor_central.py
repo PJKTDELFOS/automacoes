@@ -56,7 +56,7 @@ class ColetorCentral:
                 self.db.registrar_mapeamento_diario_PNCP(data_referencia,total_paginas)
             else:
                 print(f"[-] Falha ao acessar API para mapeamento: {resp.status_code}, ")
-                return
+                return 0
 
             while True:
                 tarefa=self.db.get_proxima_pagina_PNCP(data_referencia)
@@ -111,6 +111,7 @@ class ColetorCentral:
             self.log.registro('SISTEMA','COLETOR',
                               'CRITICAL','COL_FAIL','ERRO CATASTROFICO',str(e))
             print(f"[-] Erro crítico: {e}, 'caindo aqui" )
+            return 0
 
 
 
