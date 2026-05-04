@@ -48,9 +48,9 @@ class ColetorCentral:
             params_inicial={
                 'dataFinal': data_final_api,
                 'pagina':1,
-                'tamanhoPagina':10,
+                'tamanhoPagina':50,
             }
-            resp=self.session.get(self.endpoint,params=params_inicial,timeout=30)
+            resp=self.session.get(self.endpoint,params=params_inicial,timeout=180)
             if resp.status_code == 200:
                 total_paginas=resp.json().get('totalPaginas',1)
                 self.db.registrar_mapeamento_diario_PNCP(data_referencia,total_paginas)
@@ -69,11 +69,11 @@ class ColetorCentral:
                 params={
                     'dataFinal': data_final_api,
                     'pagina': num_pagina,
-                    'tamanhoPagina': 10,
+                    'tamanhoPagina': 50,
                 }
 
                 try:
-                    response=self.session.get(self.endpoint,params=params,timeout=30)
+                    response=self.session.get(self.endpoint,params=params,timeout=60)
                     if response.status_code == 200:
                         try:
                             dados=response.json()

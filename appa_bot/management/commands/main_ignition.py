@@ -79,7 +79,7 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.HTTP_INFO(
                         "\n[!] Coleta incompleta. Aguardando 60s para uma segunda tentativa..."
                     ))
-                    time.sleep(60)
+                    time.sleep(30)
                     coleta_diaria_atualizada = coletor.coleta_diaria()
                 if not coleta_diaria_atualizada:
                     self.stdout.write(self.style.ERROR(
