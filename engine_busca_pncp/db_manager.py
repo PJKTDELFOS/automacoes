@@ -298,18 +298,24 @@ class DBManager:
 
     def get_proxima_pagina_PNCP(self, data_coleta):
         query = """
-        SELECT id,numero_pagina from public.controle_coleta_paginas_pncp
-        WHERE data_coleta = %s
-        AND status in ('PENDENTE', 'ERRO')
-        and tentativas < 10
-        order by numero_pagina asc
-        limit 1
-        """
-
+            UPDATE public.controle_coleta_paginas_pncp
+            SET status = 'PROCESSANDO'
+            WHERE id = (
+                SELECT id FROM public.controle_coleta_paginas_pncp
+                WHERE data_coleta = %s
+                AND status IN ('PENDENTE', 'ERRO')
+                AND tentativas < 10
+                ORDER BY numero_pagina ASC
+                LIMIT 1
+                FOR UPDATE SKIP LOCKED
+            )
+            RETURNING id, numero_pagina
+            """
         try:
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(query, (data_coleta,))
+                    connection.commit()
                     res = cursor.fetchone()
                     if res:
                         return {'id': res[0], 'numero_pagina': res[1]}
