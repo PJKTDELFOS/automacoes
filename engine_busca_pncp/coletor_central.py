@@ -107,7 +107,7 @@ class ColetorCentral:
                 return 0
 
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            print(f"[!] Erro de conexão na página {num_pagina}: {e}")
+            print(f"[!] Erro de conexão na página {num_pagina}: {e} pagina grande ou pesada")
             self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 999)
             return 0
 
