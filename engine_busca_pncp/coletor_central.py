@@ -145,6 +145,7 @@ class ColetorCentral:
                 tarefa = self.db.get_proxima_pagina_PNCP(data_referencia)
 
                 if not tarefa:
+                    print('estou preso sem tarefas')
                     break
                 tarefas.append(tarefa)
                 print(f'[DEBUG] Tarefa adicionada: {len(tarefas)} — página {tarefa["numero_pagina"]}')
