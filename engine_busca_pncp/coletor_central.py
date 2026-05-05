@@ -77,6 +77,7 @@ class ColetorCentral:
 
                     self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 200)
 
+
                     # Atualiza contador global de forma segura entre threads
                     with self._counter_lock:
                         self._total_novos += novos_pagina
@@ -88,12 +89,16 @@ class ColetorCentral:
                     print(f"[!] Erro ao processar dados da página {num_pagina}: {e_proc}")
                     self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 998)
                     return 0
+            elif response.status_code == 204:
+                print(f"[✓] Página {num_pagina} sem conteúdo (204). Marcando como concluída.")
+                self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 204)
+                return 0
+
 
             elif response.status_code == 429:
-                # Rate limit: marca como erro para ser reprocessado depois
                 print(f"[!] Rate Limit na página {num_pagina}. Marcando para retry...")
                 self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 429)
-                time.sleep(5)  # pequena pausa só neste worker
+                time.sleep(5)
                 return 0
 
             else:
