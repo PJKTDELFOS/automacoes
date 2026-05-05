@@ -58,7 +58,7 @@ class ColetorCentral:
         params = {
             'dataFinal': data_final_api,
             'pagina': num_pagina,
-            'tamanhoPagina': 10,
+            'tamanhoPagina': 50,
         }
         session = self._get_session()
 
@@ -125,7 +125,7 @@ class ColetorCentral:
             params_inicial = {
                 'dataFinal': data_final_api,
                 'pagina': 1,
-                'tamanhoPagina': 10,
+                'tamanhoPagina': 50,
             }
             session = self._get_session()
             resp = session.get(self.endpoint, params=params_inicial, timeout=30)
