@@ -18,7 +18,7 @@ class ColetorCentral:
         self.max_workers = max_workers  # quantos "caixas" abertos ao mesmo tempo
 
         # Lock garante que dois workers não escrevam no banco ao mesmo tempo
-        self._db_lock = threading.Lock()
+
 
         # Contador thread-safe de novos registros
         self._total_novos = 0
@@ -197,28 +197,29 @@ class ColetorCentral:
         ON CONFLICT (identificador_certame) DO NOTHING
         '''
         try:
-            # Lock garante que apenas uma thread escreve no banco por vez
-            with self._db_lock:
-                with self.db.get_connection() as connection:
-                    with connection.cursor() as cursor:
-                        uf = (
+            with self.db.get_connection() as connection:
+                with connection.cursor() as cursor:
+                    uf = (
                             item.get('unidadeOrgao', {}).get('ufSigla') or
                             item.get('orgaoEntidade', {}).get('ufSigla') or
                             'BR'
-                        )
-                        objeto_texto = str(
-                            item.get('objetoCompra') or
-                            item.get('objeto') or
-                            ""
-                        ).lower()
-                        cursor.execute(sql, (
-                            id_hash,
-                            uf,
-                            objeto_texto,
-                            json.dumps(item)
-                        ))
-                        connection.commit()
-                        return cursor.rowcount > 0
+                    )
+                    objeto_texto = str(
+                        item.get('objetoCompra') or
+                        item.get('objeto') or
+                        ""
+                    ).lower()
+                    cursor.execute(sql, (
+                        id_hash,
+                        uf,
+                        objeto_texto,
+                        json.dumps(item)
+                    ))
+                    connection.commit()
+                    return cursor.rowcount > 0
+
+
+
         except Exception as e:
             print(f"Erro ao persistir item {id_hash}: {e}")
             return False

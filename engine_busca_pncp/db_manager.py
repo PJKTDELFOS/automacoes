@@ -18,7 +18,7 @@ class DBManager:
         }
         self.pool=pool.ThreadedConnectionPool(
             minconn=1,
-            maxconn=10,
+            maxconn=20,
             **self.db_params,
             client_encoding='UTF8',
             connect_timeout=10
