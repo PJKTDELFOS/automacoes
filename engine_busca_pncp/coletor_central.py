@@ -140,13 +140,14 @@ class ColetorCentral:
 
             # --- ETAPA 2: Coleta todas as tarefas pendentes de uma vez ---
             tarefas = []
-            tarefa_no_banco=0
+
             while True:
                 tarefa = self.db.get_proxima_pagina_PNCP(data_referencia)
-                print(f'tarefa adicoionada{tarefa_no_banco+1}')
+
                 if not tarefa:
                     break
                 tarefas.append(tarefa)
+                print(f'[DEBUG] Tarefa adicionada: {len(tarefas)} — página {tarefa["numero_pagina"]}')
 
             if not tarefas:
                 print("[+] Nenhuma página pendente para hoje.")
