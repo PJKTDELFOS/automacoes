@@ -50,66 +50,69 @@ class ColetorCentral:
         return hashlib.sha256(payload.encode('utf-8')).hexdigest()
 
     def _processar_pagina(self, id_tarefa, num_pagina, data_final_api):
-        """
-        Processa uma única página da API.
-        Este método é executado em paralelo por múltiplos workers.
-        Retorna o número de novos registros inseridos (0 em caso de erro).
-        """
         params = {
             'dataFinal': data_final_api,
             'pagina': num_pagina,
             'tamanhoPagina': 50,
         }
         session = self._get_session()
+        max_tentativas = 10  # tenta até 3 vezes antes de desistir
 
-        try:
-            response = session.get(self.endpoint, params=params, timeout=60)
+        for tentativa in range(1, max_tentativas + 1):
+            try:
+                response = session.get(self.endpoint, params=params, timeout=180)
 
-            if response.status_code == 200:
-                try:
-                    dados = response.json()
-                    items = dados.get('data', [])
-                    novos_pagina = 0
-                    for item in items:
-                        id_hash = self.get_certame_hash(item)
-                        if self._persistir_bruto(id_hash, item):
-                            novos_pagina += 1
+                if response.status_code == 200:
+                    try:
+                        dados = response.json()
+                        items = dados.get('data', [])
+                        novos_pagina = 0
+                        for item in items:
+                            id_hash = self.get_certame_hash(item)
+                            if self._persistir_bruto(id_hash, item):
+                                novos_pagina += 1
 
-                    self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 200)
+                        self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 200)
+                        with self._counter_lock:
+                            self._total_novos += novos_pagina
+                        print(f"[✓] Página {num_pagina} concluída — {novos_pagina} novos | total: {self._total_novos}")
+                        return novos_pagina
 
+                    except Exception as e_proc:
+                        print(f"[!] Erro ao processar dados da página {num_pagina}: {e_proc}")
+                        self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 998)
+                        return 0
 
-                    # Atualiza contador global de forma segura entre threads
-                    with self._counter_lock:
-                        self._total_novos += novos_pagina
-
-                    print(f"[✓] Página {num_pagina} concluída — {novos_pagina} novos | total: {self._total_novos}")
-                    return novos_pagina
-
-                except Exception as e_proc:
-                    print(f"[!] Erro ao processar dados da página {num_pagina}: {e_proc}")
-                    self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 998)
+                elif response.status_code == 204:
+                    print(f"[✓] Página {num_pagina} sem conteúdo (204). Marcando como concluída.")
+                    self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 204)
                     return 0
-            elif response.status_code == 204:
-                print(f"[✓] Página {num_pagina} sem conteúdo (204). Marcando como concluída.")
-                self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 204)
-                return 0
 
+                elif response.status_code == 429:
+                    print(
+                        f"[!] Rate Limit página {num_pagina}. Tentativa {tentativa}/{max_tentativas}. Aguardando 15s...")
+                    time.sleep(15)
+                    continue  # tenta de novo
+                elif response.status_code in [500, 502, 503, 504]:
+                    print(
+                        f"[!] Erro de Servidor ({response.status_code}) na página {num_pagina}. Tentando novamente...")
+                    time.sleep(5)
+                    continue
 
-            elif response.status_code == 429:
-                print(f"[!] Rate Limit na página {num_pagina}. Marcando para retry...")
-                self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 429)
-                time.sleep(5)
-                return 0
+                else:
+                    print(f"[!] Página {num_pagina} retornou HTTP {response.status_code}")
+                    self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', response.status_code)
+                    return 0
 
-            else:
-                print(f"[!] Página {num_pagina} retornou HTTP {response.status_code}")
-                self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', response.status_code)
-                return 0
-
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            print(f"[!] Erro de conexão na página {num_pagina}: {e} pagina grande ou pesada")
-            self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 999)
-            return 0
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                print(f"[!] Timeout/conexão página {num_pagina} — tentativa {tentativa}/{max_tentativas}: {e}")
+                if tentativa < max_tentativas:
+                    time.sleep(10 * tentativa)  # espera 10s, 20s, 30s
+                    continue
+                else:
+                    print(f"[✗] Página {num_pagina} falhou após {max_tentativas} tentativas.")
+                    self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 999)
+                    return 0
 
     def coleta_diaria(self, dias_futuros=None):
         hoje = datetime.now()
@@ -184,6 +187,31 @@ class ColetorCentral:
                         # Progresso a cada 50 páginas
                         if concluidas % 50 == 0:
                             print(f"[...] Progresso: {concluidas}/{len(tarefas)} páginas | {self._total_novos} novos registros")
+                pendentes = True
+                rodada = 1
+                while pendentes and rodada <= 3:
+                    rodada += 1
+                    retentar = []
+                    while True:
+                        tarefa = self.db.get_proxima_pagina_PNCP(data_referencia)
+                        if not tarefa:
+                            break
+                        retentar.append(tarefa)
+
+                    if not retentar:
+                        pendentes = False
+                        break
+
+                    print(f"[↺] Rodada {rodada}: {len(retentar)} páginas para retry...")
+                    with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                        futures = {
+                            executor.submit(self._processar_pagina, t['id'], t['numero_pagina'], data_final_api): t[
+                                'numero_pagina'] for t in retentar}
+                        for future in as_completed(futures):
+                            try:
+                                future.result()
+                            except Exception as e:
+                                print(f"[!] Erro no retry: {e}")
 
             # --- ETAPA 4: Verifica se a coleta foi completa ---
             if self.db.verificar_conclusao_dia_PNCP(data_referencia):
