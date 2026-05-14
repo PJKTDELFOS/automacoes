@@ -17,7 +17,7 @@ class ColetorCentral:
         self.dias_coleta = dias_padrao
         self.max_workers = max_workers  # quantos "caixas" abertos ao mesmo tempo
 
-        # Lock garante que dois workers não escrevam no banco ao mesmo tempo
+
 
 
         # Contador thread-safe de novos registros
