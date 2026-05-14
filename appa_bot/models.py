@@ -44,7 +44,7 @@ class Stakeholder(models.Model):
         models.TextField(
             max_length=5000, blank=True, null=True, verbose_name='Termos para Exclusão da busca',
             help_text=' digitas as palavra chave ou termos de sua busca separadas por virgula'
-        ),blank=True,null=True,verbose_name='Termos para Exclusão da busca',help_text=' digitas as palavra chave ou termos de sua busca separadas por virgula'
+        ),blank=True,null=True,verbose_name='Termos para Exclusão da busca',
     )
     UF=ArrayField(
         models.CharField(
