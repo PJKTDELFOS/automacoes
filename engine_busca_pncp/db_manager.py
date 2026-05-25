@@ -1,10 +1,14 @@
 import os
+os.environ["PGCLIENTENCODING"] = "UTF8"
+os.environ["LC_ALL"] = "C"
+
+
 from psycopg2 import pool
 import psycopg2
 from contextlib import contextmanager
 from dotenv import load_dotenv
 from engine_busca_pncp.config import Config
-load_dotenv()
+load_dotenv(encoding='cp1252')
 
 class DBManager:
     def __init__(self):
@@ -21,7 +25,7 @@ class DBManager:
             maxconn=20,
             **self.db_params,
             client_encoding='UTF8',
-            connect_timeout=10
+            connect_timeout=10,
         )
 
         try:
