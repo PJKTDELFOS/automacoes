@@ -29,6 +29,7 @@ app.yaml
 .env
 planilhas_teste
 assinaturas.xlsx
+data_base_commands/reset_manual_falha.sql
 
 
 
