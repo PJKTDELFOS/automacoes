@@ -73,24 +73,24 @@ class Command(BaseCommand):
 
             # para testes do envio do email comentar aqui
 
-            # coletor = ColetorCentral(db_manager=link_db, dias_padrao=15)
-            #
-            # try:
-            #     coleta_diaria_atualizada = coletor.coleta_diaria()
-            #
-            #     if not coleta_diaria_atualizada:
-            #         self.stdout.write(self.style.HTTP_INFO(
-            #             "\n[!] Coleta incompleta. Aguardando 60s para uma segunda tentativa..."
-            #         ))
-            #         time.sleep(30)
-            #         coleta_diaria_atualizada = coletor.coleta_diaria()
-            #     if not coleta_diaria_atualizada:
-            #         self.stdout.write(self.style.ERROR(
-            #             "\n[!] A coleta falhou após retentativa. Abortando envio para garantir integridade."))
-            #         return
-            # except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            #     print(f"[!] Erro de conexão na página : {e}")
-            #     return
+            coletor = ColetorCentral(db_manager=link_db, dias_padrao=15)
+
+            try:
+                coleta_diaria_atualizada = coletor.coleta_diaria()
+
+                if not coleta_diaria_atualizada:
+                    self.stdout.write(self.style.HTTP_INFO(
+                        "\n[!] Coleta incompleta. Aguardando 60s para uma segunda tentativa..."
+                    ))
+                    time.sleep(30)
+                    coleta_diaria_atualizada = coletor.coleta_diaria()
+                if not coleta_diaria_atualizada:
+                    self.stdout.write(self.style.ERROR(
+                        "\n[!] A coleta falhou após retentativa. Abortando envio para garantir integridade."))
+                    return
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                print(f"[!] Erro de conexão na página : {e}")
+                return
 
 
 
