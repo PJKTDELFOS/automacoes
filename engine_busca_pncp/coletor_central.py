@@ -60,7 +60,7 @@ class ColetorCentral:
 
         for tentativa in range(1, max_tentativas + 1):
             try:
-                response = session.get(self.endpoint, params=params, timeout=180)
+                response = session.get(self.endpoint, params=params, timeout=60)
 
                 if response.status_code == 200:
                     try:
@@ -136,7 +136,7 @@ class ColetorCentral:
                 'tamanhoPagina': 50,
             }
             session = self._get_session()
-            resp = session.get(self.endpoint, params=params_inicial, timeout=30)
+            resp = session.get(self.endpoint, params=params_inicial, timeout=180)
 
             if resp.status_code == 200:
                 total_paginas = resp.json().get('totalPaginas', 1)
