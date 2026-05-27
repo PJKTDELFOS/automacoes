@@ -3,10 +3,17 @@ import hashlib
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-import requests
 import time
+
+# Novos imports essenciais para a Engine de Navegador
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+
 from engine_busca_pncp.db_manager import DBManager
 from engine_busca_pncp.log_manager import LogManager
+from engine_busca_pncp.config import Config
 
 
 class ColetorCentral:
@@ -15,218 +22,201 @@ class ColetorCentral:
         self.log = LogManager(self.db)
         self.endpoint = "https://pncp.gov.br/api/consulta/v1/contratacoes/proposta"
         self.dias_coleta = dias_padrao
-        self.max_workers = max_workers  # quantos "caixas" abertos ao mesmo tempo
+        self.max_workers = max_workers  # Quantidade de threads paralelas
 
-
-
-
-        # Contador thread-safe de novos registros
+        # Contador thread-safe de novos registros salvos
         self._total_novos = 0
         self._counter_lock = threading.Lock()
 
-        # Cada worker usa sua própria sessão HTTP (sessions não são thread-safe)
-        self._session_local = threading.local()
-
-    def _get_session(self):
-        """Retorna uma sessão HTTP exclusiva para a thread atual."""
-        if not hasattr(self._session_local, 'session'):
-            session = requests.Session()
-            session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive'
-            })
-            self._session_local.session = session
-        return self._session_local.session
-
     def get_certame_hash(self, item):
-        payload = (
-            f"{item.get('orgaoEntidade', {}).get('cnpj', '')}"
-            f"{item.get('anoCompra')}"
-            f"{item.get('numeroCompra')}"
-            f"{item.get('unidadeOrgao', {}).get('codigoUnidade', '')}"
-        )
-        return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+        """Gera um ID único estável baseado nos metadados do certame."""
+        orgao = item.get('orgaoEntidade', {})
+        cnpj = orgao.get('cnpj', '00000000000000')
+        ano = item.get('anoCompra', '0000')
+        seq = item.get('sequencialCompra', '0')
 
-    def _processar_pagina(self, id_tarefa, num_pagina, data_final_api):
-        params = {
-            'dataFinal': data_final_api,
-            'pagina': num_pagina,
-            'tamanhoPagina': 50,
-        }
-        session = self._get_session()
-        max_tentativas = 10  # tenta até 3 vezes antes de desistir
+        string_chave = f"{cnpj}-{ano}-{seq}"
+        return hashlib.md5(string_chave.encode('utf-8')).hexdigest()
 
-        for tentativa in range(1, max_tentativas + 1):
-            try:
-                response = session.get(self.endpoint, params=params, timeout=60)
+    def _criar_driver_headless(self):
+        """Instancia um navegador Chrome invisível isolado e configurado com o Proxy da Webshare."""
+        options = Options()
+        options.add_argument("--headless=new")  # Força modo invisível dentro do Docker Linux
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
 
-                if response.status_code == 200:
-                    try:
-                        dados = response.json()
-                        items = dados.get('data', [])
-                        novos_pagina = 0
-                        for item in items:
-                            id_hash = self.get_certame_hash(item)
-                            if self._persistir_bruto(id_hash, item):
-                                novos_pagina += 1
+        # Injeta as configurações do Proxy diretamente na engine do navegador
+        proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
+        options.add_argument(f'--proxy-server=http://{proxy_server}')
 
-                        self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 200)
-                        with self._counter_lock:
-                            self._total_novos += novos_pagina
-                        print(f"[✓] Página {num_pagina} concluída — {novos_pagina} novos | total: {self._total_novos}")
-                        return novos_pagina
+        # Gerencia e baixa automaticamente a versão correta do ChromeDriver
+        service = Service(ChromeDriverManager().install())
+        return webdriver.Chrome(service=service, options=options)
 
-                    except Exception as e_proc:
-                        print(f"[!] Erro ao processar dados da página {num_pagina}: {e_proc}")
-                        self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 998)
-                        return 0
+    def coleta_diaria(self):
+        """Orquestrador principal do ciclo diário de raspagem de dados."""
+        data_referencia = datetime.now().date()
+        data_final_api = (datetime.now() + timedelta(days=self.dias_coleta)).strftime('%Y%m%d')
 
-                elif response.status_code == 204:
-                    print(f"[✓] Página {num_pagina} sem conteúdo (204). Marcando como concluída.")
-                    self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 204)
-                    return 0
-
-                elif response.status_code == 429:
-                    print(
-                        f"[!] Rate Limit página {num_pagina}. Tentativa {tentativa}/{max_tentativas}. Aguardando 15s...")
-                    time.sleep(15)
-                    continue  # tenta de novo
-                elif response.status_code in [500, 502, 503, 504]:
-                    print(
-                        f"[!] Erro de Servidor ({response.status_code}) na página {num_pagina}. Tentando novamente...")
-                    time.sleep(5)
-                    continue
-
-                else:
-                    print(f"[!] Página {num_pagina} retornou HTTP {response.status_code}")
-                    self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', response.status_code)
-                    return 0
-
-            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-                print(f"[!] Timeout/conexão página {num_pagina} — tentativa {tentativa}/{max_tentativas}: {e}")
-                if tentativa < max_tentativas:
-                    time.sleep(10 * tentativa)  # espera 10s, 20s, 30s
-                    continue
-                else:
-                    print(f"[✗] Página {num_pagina} falhou após {max_tentativas} tentativas.")
-                    self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 999)
-                    return 0
-
-    def coleta_diaria(self, dias_futuros=None):
-        hoje = datetime.now()
-        data_referencia = hoje.date()
-        self._total_novos = 0  # reseta contador a cada execução
-
-        dias = dias_futuros if dias_futuros is not None else self.dias_coleta
-        data_limite = hoje + timedelta(days=dias)
-        data_final_api = data_limite.strftime("%Y%m%d")
-        data_para_exibir = data_limite.strftime("%d/%m/%Y")
-
-        print(f"[*] Iniciando coleta central até: {data_para_exibir}")
+        print(f"[*] Iniciando coleta central até: {data_final_api}")
         print(f"[*] Endpoint: {self.endpoint}")
         print(f"[*] Workers paralelos: {self.max_workers}")
 
-        try:
-            # --- ETAPA 1: Mapeamento (descobre quantas páginas existem) ---
-            params_inicial = {
-                'dataFinal': data_final_api,
-                'pagina': 1,
-                'tamanhoPagina': 50,
-            }
-            session = self._get_session()
-            resp = session.get(self.endpoint, params=params_inicial, timeout=180)
+        self._total_novos = 0
 
-            if resp.status_code == 200:
-                total_paginas = resp.json().get('totalPaginas', 1)
-                print(f"[*] Total de páginas mapeadas: {total_paginas}")
-                self.db.registrar_mapeamento_diario_PNCP(data_referencia, total_paginas)
-            else:
-                print(f"[-] Falha ao acessar API para mapeamento: {resp.status_code}")
+        # --- ETAPA 1: Captura o mapeamento de total de páginas usando o Selenium ---
+        driver = self._criar_driver_headless()
+        try:
+            url_mapeamento = f"{self.endpoint}?dataFinal={data_final_api}&pagina=1&tamanhoPagina=50"
+            driver.get(url_mapeamento)
+            time.sleep(4)  # Janela de tempo pro WAF processar o Javascript e cookies iniciais
+
+            # Quando o Chrome acessa um JSON, ele renderiza o texto puro dentro da tag body
+            conteudo_bruto = driver.find_element("tag name", "body").text
+
+            if "request rejected" in conteudo_bruto.lower() or "<html" in conteudo_bruto.lower():
+                print("[-] O PNCP rejeitou a requisição inicial de mapeamento via Navegador.")
+                driver.quit()
                 return False
 
-            # --- ETAPA 2: Coleta todas as tarefas pendentes de uma vez ---
-            tarefas = []
+            dados = json.loads(conteudo_bruto)
+            total_paginas = dados.get('totalPaginas', 0)
+            print(f"[+] Mapeamento concluído: {total_paginas} páginas identificadas.")
 
+            if total_paginas == 0:
+                driver.quit()
+                return True
+
+            # Alimenta a tabela de controle de páginas (sua lógica original)
+            self.db.registrar_mapeamento_diario_PNCP(data_referencia,total_paginas)
+            driver.quit()
+
+        except Exception as e_mapeamento:
+            print(f"[-] Falha catastrófica no mapeamento inicial: {e_mapeamento}")
+            driver.quit()
+            return False
+
+        try:
+            # --- ETAPA 2: Consome e esvazia a fila do banco de dados (Sua lógica mantida) ---
+            tarefas = []
             while True:
                 tarefa = self.db.get_proxima_pagina_PNCP(data_referencia)
-
                 if not tarefa:
-                    print('estou preso sem tarefas')
                     break
                 tarefas.append(tarefa)
-                print(f'[DEBUG] Tarefa adicionada: {len(tarefas)} — página {tarefa["numero_pagina"]}')
+                print(f'[DEBUG] Tarefa adicionada à memória: {len(tarefas)} — página {tarefa["numero_pagina"]}')
 
             if not tarefas:
-                print("[+] Nenhuma página pendente para hoje.")
-            else:
-                print(f"[*] {len(tarefas)} páginas para processar com {self.max_workers} workers...")
+                print("[+] Nenhuma página pendente para processar hoje.")
+                return True
 
-                # --- ETAPA 3: Processa todas as páginas em paralelo ---
+            # --- ETAPA 3: Disparar os Workers paralelos no ThreadPoolExecutor ---
+            print(f"[*] Processando {len(tarefas)} páginas com {self.max_workers} threads...")
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                futures = {
+                    executor.submit(self._processar_pagina, t['id'], t['numero_pagina'], data_final_api): t
+                    for t in tarefas
+                }
+                for future in as_completed(futures):
+                    future.result()
+
+            # --- ETAPA 4: Rodadas de Repescagem de Erros (Sua lógica mantida) ---
+            pendentes = True
+            rodada = 1
+            while pendentes and rodada <= 3:
+                rodada += 1
+                retentar = []
+                while True:
+                    tarefa = self.db.get_proxima_pagina_PNCP(data_referencia)
+                    if not tarefa:
+                        break
+                    retentar.append(tarefa)
+
+                if not retentar:
+                    break
+
+                print(f"[↺] Rodada {rodada}/3 de recuperação para {len(retentar)} páginas que falharam...")
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                     futures = {
-                        executor.submit(
-                            self._processar_pagina,
-                            t['id'],
-                            t['numero_pagina'],
-                            data_final_api
-                        ): t['numero_pagina']
-                        for t in tarefas
+                        executor.submit(self._processar_pagina, t['id'], t['numero_pagina'], data_final_api): t
+                        for t in retentar
                     }
-
-                    concluidas = 0
                     for future in as_completed(futures):
-                        num_pagina = futures[future]
-                        concluidas += 1
-                        try:
-                            future.result()
-                        except Exception as e:
-                            print(f"[!] Exceção não tratada na página {num_pagina}: {e}")
+                        future.result()
 
-                        # Progresso a cada 50 páginas
-                        if concluidas % 50 == 0:
-                            print(f"[...] Progresso: {concluidas}/{len(tarefas)} páginas | {self._total_novos} novos registros")
-                pendentes = True
-                rodada = 1
-                while pendentes and rodada <= 3:
-                    rodada += 1
-                    retentar = []
-                    while True:
-                        tarefa = self.db.get_proxima_pagina_PNCP(data_referencia)
-                        if not tarefa:
-                            break
-                        retentar.append(tarefa)
-
-                    if not retentar:
-                        pendentes = False
-                        break
-
-                    print(f"[↺] Rodada {rodada}: {len(retentar)} páginas para retry...")
-                    with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                        futures = {
-                            executor.submit(self._processar_pagina, t['id'], t['numero_pagina'], data_final_api): t[
-                                'numero_pagina'] for t in retentar}
-                        for future in as_completed(futures):
-                            try:
-                                future.result()
-                            except Exception as e:
-                                print(f"[!] Erro no retry: {e}")
-
-            # --- ETAPA 4: Verifica se a coleta foi completa ---
+            # Verificação final de fechamento do dia
             if self.db.verificar_conclusao_dia_PNCP(data_referencia):
-                print(f"[🏆] Integridade confirmada! {self._total_novos} novos editais coletados.")
+                self.log.registro('SISTEMA', 'COLETOR', 'INFO', 'COL_OK', 'SUCESSO',
+                                  f'Coleta completa: {self._total_novos} novos registros.')
+                print(f"[✓] Execução finalizada com Sucesso! Total de novos certames: {self._total_novos}")
                 return True
             else:
-                print(f"[!] Coleta parcial. {self._total_novos} novos itens no banco, mas faltam páginas.")
+                self.log.registro('SISTEMA', 'COLETOR', 'WARNING', 'COL_PARTIAL', 'COLETA INCOMPLETA',
+                                  "Restam páginas com falha registradas.")
+                print("[-] Varredura finalizada, mas ainda restam páginas com status de erro no banco.")
                 return False
 
         except Exception as e:
             self.log.registro('SISTEMA', 'COLETOR', 'CRITICAL', 'COL_FAIL', 'ERRO CATASTROFICO', str(e))
-            print(f"[-] Erro crítico: {e}")
+            print(f"[-] Erro crítico no laço principal: {e}")
             return False
 
+    def _processar_pagina(self, id_tarefa, num_pagina, data_final_api):
+        """Worker das Threads: Abre um navegador próprio, resolve os cookies do WAF e persiste dados."""
+        url_completa = f"{self.endpoint}?dataFinal={data_final_api}&pagina={num_pagina}&tamanhoPagina=50"
+
+        # Cada thread cria a sua própria instância limpa do Chrome para evitar colisões
+        driver = self._criar_driver_headless()
+        max_tentativas = 3
+
+        for tentativa in range(1, max_tentativas + 1):
+            try:
+                driver.get(url_completa)
+                time.sleep(4)  # Aguarda a descriptografia e carregamento do JSON na tela
+
+                conteudo_tela = driver.find_element("tag name", "body").text
+
+                # Validação contra respostas falsas de bloqueio do Firewall
+                if "request rejected" in conteudo_tela.lower() or "<html" in conteudo_tela.lower():
+                    print(
+                        f"[!] WAF interceptou a página {num_pagina}. Tentativa {tentativa}/{max_tentativas}. Recomeçando...")
+                    time.sleep(4)
+                    continue
+
+                # Transforma o texto extraído da tela em dicionário estruturado
+                dados = json.loads(conteudo_tela)
+                items = dados.get('data', [])
+                novos_pagina = 0
+
+                for item in items:
+                    id_hash = self.get_certame_hash(item)
+                    if self._persistir_bruto(id_hash, item):
+                        novos_pagina += 1
+
+                # Atualiza a máquina de estados para Concluído no banco de dados
+                self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 200)
+
+                with self._counter_lock:
+                    self._total_novos += novos_pagina
+
+                print(
+                    f"[✓] Página {num_pagina} concluída via Selenium — {novos_pagina} novos | Total Geral: {self._total_novos}")
+                driver.quit()  # Fecha e mata o processo do Chrome da memória
+                return novos_pagina
+
+            except Exception as e_thread:
+                print(f"[-] Erro na thread da página {num_pagina} (Tentativa {tentativa}/{max_tentativas}): {e_thread}")
+                time.sleep(4)
+
+        # Caso todas as tentativas falhem, joga o status para ERRO para o seu botão de rollback manual agir
+        self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 500)
+        driver.quit()
+        return 0
+
     def _persistir_bruto(self, id_hash, item):
+        """Mantém a gravação direta no banco PostgreSQL (Sua lógica mantida)."""
         sql = '''
         INSERT INTO public.pncp_dados_brutos(
             identificador_certame, uf, objeto, dados_json)
@@ -254,9 +244,6 @@ class ColetorCentral:
                     ))
                     connection.commit()
                     return cursor.rowcount > 0
-
-
-
         except Exception as e:
             print(f"Erro ao persistir item {id_hash}: {e}")
             return False

@@ -25,6 +25,12 @@ class Config:
     RESEND_API_KEY = _require('RESEND_API_KEY')
     EMAIL_RESEND_FROM = _require('EMAIL_FROM_RESEND')
 
+    #Configuração de Proxy - Webshare
+    PROXY_HOST = _require('PROXY_HOST')
+    PROXY_PORT = _require('PROXY_PORT')
+    PROXY_USER = _require('PROXY_USER')
+    PROXY_PASSWORD = _require('PROXY_PASSWORD')
+
     GMAIL_EMAIL_FROM=_require('USER_GMAIL')
     GMAIL_PASSWORD=_require('GMAIL_KEY')
 
