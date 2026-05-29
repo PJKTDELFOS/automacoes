@@ -48,8 +48,8 @@ class ColetorCentral:
         options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
 
         # Injeta as configurações do Proxy diretamente na engine do navegador
-        proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
-        options.add_argument(f'--proxy-server=http://{proxy_server}')
+        # proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
+        # options.add_argument(f'--proxy-server=http://{proxy_server}')
 
         # Gerencia e baixa automaticamente a versão correta do ChromeDriver
         service = Service(ChromeDriverManager().install())
@@ -67,8 +67,10 @@ class ColetorCentral:
         self._total_novos = 0
 
         # --- ETAPA 1: Captura o mapeamento de total de páginas usando o Selenium ---
-        driver = self._criar_driver_headless()
+        driver=None
+
         try:
+            driver = self._criar_driver_headless()
             url_mapeamento = f"{self.endpoint}?dataFinal={data_final_api}&pagina=1&tamanhoPagina=50"
             driver.get(url_mapeamento)
             time.sleep(4)  # Janela de tempo pro WAF processar o Javascript e cookies iniciais
@@ -95,7 +97,12 @@ class ColetorCentral:
 
         except Exception as e_mapeamento:
             print(f"[-] Falha catastrófica no mapeamento inicial: {e_mapeamento}")
-            driver.quit()
+            if driver is not None:
+                try:
+                    driver.quit()
+                except Exception as e:
+                    print(f' falhando no mapeamento: {e}')
+                    pass
             return False
 
         try:
@@ -122,7 +129,7 @@ class ColetorCentral:
                 for future in as_completed(futures):
                     future.result()
 
-            # --- ETAPA 4: Rodadas de Repescagem de Erros (Sua lógica mantida) ---
+            # --- ETAPA 4: Rodadas de Repescagem de Erros ( mantida) ---
             pendentes = True
             rodada = 1
             while pendentes and rodada <= 3:
@@ -168,11 +175,16 @@ class ColetorCentral:
         url_completa = f"{self.endpoint}?dataFinal={data_final_api}&pagina={num_pagina}&tamanhoPagina=50"
 
         # Cada thread cria a sua própria instância limpa do Chrome para evitar colisões
-        driver = self._criar_driver_headless()
-        max_tentativas = 3
+
+
+        max_tentativas = 5
 
         for tentativa in range(1, max_tentativas + 1):
+            driver = None
             try:
+                import random
+                time.sleep(random.uniform(0.5,2))
+                driver = self._criar_driver_headless()
                 driver.get(url_completa)
                 time.sleep(4)  # Aguarda a descriptografia e carregamento do JSON na tela
 
@@ -182,11 +194,23 @@ class ColetorCentral:
                 if "request rejected" in conteudo_tela.lower() or "<html" in conteudo_tela.lower():
                     print(
                         f"[!] WAF interceptou a página {num_pagina}. Tentativa {tentativa}/{max_tentativas}. Recomeçando...")
+                    driver.quit()
                     time.sleep(4)
                     continue
 
                 # Transforma o texto extraído da tela em dicionário estruturado
-                dados = json.loads(conteudo_tela)
+                try:
+                    dados = json.loads(conteudo_tela)
+                except json.JSONDecodeError as e:
+                    print(
+                        f"[-] Instabilidade no servidor PNCP na página"
+                        f" {num_pagina} ({str(e)}). A aguardar respiro... Tentativa {tentativa}/{max_tentativas}")
+                    driver.quit()
+                    time.sleep(8)
+                    continue
+
+
+
                 items = dados.get('data', [])
                 novos_pagina = 0
 
@@ -208,11 +232,16 @@ class ColetorCentral:
 
             except Exception as e_thread:
                 print(f"[-] Erro na thread da página {num_pagina} (Tentativa {tentativa}/{max_tentativas}): {e_thread}")
+                if driver is not None:
+                    try:
+                        driver.quit()
+                    except Exception as e:
+                        print(f' cai na falha final {e}')
+                        pass
                 time.sleep(4)
 
         # Caso todas as tentativas falhem, joga o status para ERRO para o seu botão de rollback manual agir
         self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'ERRO', 500)
-        driver.quit()
         return 0
 
     def _persistir_bruto(self, id_hash, item):

@@ -6,6 +6,17 @@ from sqlalchemy import create_engine, text
 from engine_busca_pncp.config import Config
 
 
+'''
+ WHERE (objeto ILIKE '%locação de veículo%' 
+        OR objeto ILIKE '%locaçao de veiculo%' 
+        OR objeto ILIKE '%prancha%'
+        OR objeto ILIKE '%locaçao de caminhao%'
+        OR objeto ILIKE '%transporte rodoviario'
+        OR objeto ILIKE '%carga extraordianaria%'
+        OR objeto ILIKE '%transporte rodoviario de cargas%')
+          AND uf = 'RJ'
+'''
+
 def planilha_silvio(nome_arquivo):
     try:
         url = (
@@ -15,15 +26,8 @@ def planilha_silvio(nome_arquivo):
         engine = create_engine(url)
 
         querry = text("""
-        SELECT * FROM public.pncp_dados_brutos
-        WHERE (objeto ILIKE '%locação de veículo%' 
-        OR objeto ILIKE '%locaçao de veiculo%' 
-        OR objeto ILIKE '%prancha%'
-        OR objeto ILIKE '%locaçao de caminhao%'
-        OR objeto ILIKE '%transporte rodoviario'
-        OR objeto ILIKE '%carga extraordianaria%'
-        OR objeto ILIKE '%transporte rodoviario de cargas%')
-          AND uf = 'RJ';
+        SELECT * FROM public.pncp_dados_brutos ;
+          
         """)
 
         with engine.connect() as conn:
@@ -38,4 +42,5 @@ def planilha_silvio(nome_arquivo):
 
 
 if __name__ == "__main__":
-    planilha_silvio("planilhacarros.xlsx")
+    planilha_silvio("planilhteste_duplicados.xlsx")
+

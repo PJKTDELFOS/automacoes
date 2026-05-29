@@ -23,8 +23,8 @@ options.add_argument("--blink-settings=imagesEnabled=false")  # Desliga imagens 
 
 # 3. Injeta a URL do Proxy com autenticação diretamente no Chrome
 # O Chrome aceita o proxy direto por argumento de inicialização
-proxy_server = f"{PROXY_HOST}:{PROXY_PORT}"
-options.add_argument(f'--proxy-server=http://{proxy_server}')
+# proxy_server = f"{PROXY_HOST}:{PROXY_PORT}"
+# options.add_argument(f'--proxy-server=http://{proxy_server}')
 
 # Executa o download automático do driver compatível com o seu Chrome atual
 service = Service(ChromeDriverManager().install())
