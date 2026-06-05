@@ -36,7 +36,7 @@ class ColetorCentral:
         ano = item.get('anoCompra', '0000')
         seq = item.get('sequencialCompra', '0')
 
-        string_chave = f"{cnpj}-{ano}-{seq}"
+        string_chave = f"{cnpj}-{ano}-{seq}-{orgao}"
         return hashlib.md5(string_chave.encode('utf-8')).hexdigest()
 
     def _criar_driver_headless(self):
