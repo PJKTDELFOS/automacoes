@@ -31,12 +31,18 @@ class ColetorCentral:
 
     def get_certame_hash(self, item):
         """Gera um ID único estável baseado nos metadados do certame."""
-        orgao = item.get('orgaoEntidade', {})
-        cnpj = orgao.get('cnpj', '00000000000000')
-        ano = item.get('anoCompra', '0000')
-        seq = item.get('sequencialCompra', '0')
+        id_oficial = item.get('numeroControlePNCP')
+        if id_oficial:
+            string_chave = str(id_oficial).strip()
+        else:
+            # 2. Plano B caso o governo envie um bloco corrompido sem o número de controle
+            orgao = item.get('orgaoEntidade', {})
+            cnpj = orgao.get('cnpj') or '00000000000000'
+            ano = item.get('anoCompra') or '0000'
+            seq = item.get('sequencialCompra') or '0'
+            link = item.get('linkSistemaOrigem') or ''
 
-        string_chave = f"{cnpj}-{ano}-{seq}-{orgao}"
+            string_chave = f"{cnpj}-{ano}-{seq}-{link}"
         return hashlib.md5(string_chave.encode('utf-8')).hexdigest()
 
     def _criar_driver_headless(self):
