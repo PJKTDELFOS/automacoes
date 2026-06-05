@@ -4,6 +4,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 import time
+import random
 
 # Novos imports essenciais para a Engine de Navegador
 from selenium import webdriver
@@ -67,11 +68,12 @@ class ColetorCentral:
         self._total_novos = 0
 
         # --- ETAPA 1: Captura o mapeamento de total de páginas usando o Selenium ---
-        driver=None
+        driver = None
 
         try:
             driver = self._criar_driver_headless()
-            url_mapeamento = f"{self.endpoint}?dataFinal={data_final_api}&pagina=1&tamanhoPagina=50"
+            # MUDANÇA DE OURO: Adicionado &ordenacao=asc para fixar a ordem das páginas iniciais
+            url_mapeamento = f"{self.endpoint}?dataFinal={data_final_api}&pagina=1&tamanhoPagina=50&ordenacao=asc"
             driver.get(url_mapeamento)
             time.sleep(4)  # Janela de tempo pro WAF processar o Javascript e cookies iniciais
 
@@ -92,7 +94,7 @@ class ColetorCentral:
                 return True
 
             # Alimenta a tabela de controle de páginas (sua lógica original)
-            self.db.registrar_mapeamento_diario_PNCP(data_referencia,total_paginas)
+            self.db.registrar_mapeamento_diario_PNCP(data_referencia, total_paginas)
             driver.quit()
 
         except Exception as e_mapeamento:
@@ -119,21 +121,29 @@ class ColetorCentral:
                 print("[+] Nenhuma página pendente para processar hoje.")
                 return True
 
-            # --- ETAPA 3: Disparar os Workers paralelos no ThreadPoolExecutor ---
+            # --- ETAPA 3: Disparar os Workers paralelos no ThreadPoolExecutor com espaçamento ---
             print(f"[*] Processando {len(tarefas)} páginas com {self.max_workers} threads...")
+            INTERVALO_ENTRE_WORKERS = 2  # Respiro em segundos para suavizar o consumo e o WAF
+
+            futures = {}
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                futures = {
-                    executor.submit(self._processar_pagina, t['id'], t['numero_pagina'], data_final_api): t
-                    for t in tarefas
-                }
+                for t in tarefas:
+                    # Enfileira e dispara o worker para a página atual
+                    future = executor.submit(self._processar_pagina, t['id'], t['numero_pagina'], data_final_api)
+                    futures[future] = t
+
+                    # Aplica o delay estratégico antes de disparar o próximo worker
+                    time.sleep(INTERVALO_ENTRE_WORKERS)
+
+                # Aguarda a conclusão de todos os que foram ativados
                 for future in as_completed(futures):
                     future.result()
 
-            # --- ETAPA 4: Rodadas de Repescagem de Erros ( mantida) ---
+            # --- ETAPA 4: Rodadas de Repescagem de Erros (Corrigido contador de rodadas e adicionado delay) ---
             pendentes = True
+            max_rodadas = 3
             rodada = 1
-            while pendentes and rodada <= 3:
-                rodada += 1
+            while pendentes and rodada <= max_rodadas:
                 retentar = []
                 while True:
                     tarefa = self.db.get_proxima_pagina_PNCP(data_referencia)
@@ -144,14 +154,21 @@ class ColetorCentral:
                 if not retentar:
                     break
 
-                print(f"[↺] Rodada {rodada}/3 de recuperação para {len(retentar)} páginas que falharam...")
+                print(f"[↺] Rodada {rodada}/{max_rodadas} de recuperação para {len(retentar)} páginas que falharam...")
+
+                futures_retentar = {}
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                    futures = {
-                        executor.submit(self._processar_pagina, t['id'], t['numero_pagina'], data_final_api): t
-                        for t in retentar
-                    }
-                    for future in as_completed(futures):
+                    for t in retentar:
+                        future = executor.submit(self._processar_pagina, t['id'], t['numero_pagina'], data_final_api)
+                        futures_retentar[future] = t
+
+                        # Respiro idêntico na repescagem para manter a VPS fria
+                        time.sleep(INTERVALO_ENTRE_WORKERS)
+
+                    for future in as_completed(futures_retentar):
                         future.result()
+
+                rodada += 1  # Incremento movido para o final do ciclo de forma correta
 
             # Verificação final de fechamento do dia
             if self.db.verificar_conclusao_dia_PNCP(data_referencia):
@@ -172,18 +189,16 @@ class ColetorCentral:
 
     def _processar_pagina(self, id_tarefa, num_pagina, data_final_api):
         """Worker das Threads: Abre um navegador próprio, resolve os cookies do WAF e persiste dados."""
-        url_completa = f"{self.endpoint}?dataFinal={data_final_api}&pagina={num_pagina}&tamanhoPagina=50"
-
-        # Cada thread cria a sua própria instância limpa do Chrome para evitar colisões
-
+        # MUDANÇA DE OURO: Adicionado &ordenacao=asc também nas requisições individuais das threads
+        url_completa = f"{self.endpoint}?dataFinal={data_final_api}&pagina={num_pagina}&tamanhoPagina=50&ordenacao=asc"
 
         max_tentativas = 5
 
         for tentativa in range(1, max_tentativas + 1):
             driver = None
             try:
-                import random
-                time.sleep(random.uniform(0.5,2))
+                # O jitter nativo ajuda a baralhar as requisições que chegam ao servidor
+                time.sleep(random.uniform(0.5, 2))
                 driver = self._criar_driver_headless()
                 driver.get(url_completa)
                 time.sleep(4)  # Aguarda a descriptografia e carregamento do JSON na tela
@@ -208,8 +223,6 @@ class ColetorCentral:
                     driver.quit()
                     time.sleep(8)
                     continue
-
-
 
                 items = dados.get('data', [])
                 novos_pagina = 0
