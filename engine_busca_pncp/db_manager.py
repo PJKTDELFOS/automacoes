@@ -39,8 +39,15 @@ class DBManager:
         conn=self.pool.getconn()
         try:
             yield conn
+        except Exception as e:
+            print(f' falha no get_conection do db manager: {e}')
+            conn.rollback()
+            raise
         finally:
             self.pool.putconn(conn)
+
+    def close_(self):
+        self.pool.closeall()
 
 #criaçao das tabelas
     def criar_estrutura_inicial(self):
@@ -141,6 +148,7 @@ class DBManager:
                     "CREATE INDEX IF NOT EXISTS idx_status_campanha ON public.pncp_leads_brutos(status_envio_campanha);")
                 cur.execute(
                     "CREATE INDEX IF NOT EXISTS idx_razao_social_busca ON public.pncp_leads_brutos(razao_social);")
+            conn.autocommit = False  # <- restaura AQUI, depois de fechar o cursor
 
 #controle de atualizaçao das licitações no banco de dados
     def ja_enviado(self,identificador,cliente):
@@ -153,8 +161,9 @@ class DBManager:
                     )
                     return cursor.fetchone() is not None
         except Exception as e:
-            print(f' erro ao consultar DB {e}')
-            return True
+            raise RuntimeError(f"Falha ao verificar histórico de envio: {e}") from e
+
+
 
 
     def registro_envio(self,identificador,cliente):
@@ -239,7 +248,7 @@ class DBManager:
             return []
 
     def atualizar_status_campanha(self,cnpj,status_novo):
-        if status_novo in ['enviado','sucesso']:
+        if status_novo.upper() in ['ENVIADO', 'SUCESSO']:
             query="""
             UPDATE public.pncp_leads_brutos 
                 SET status_envio_campanha = %s, 
@@ -319,8 +328,8 @@ class DBManager:
             with self.get_connection() as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(query, (data_coleta,))
-                    connection.commit()
                     res = cursor.fetchone()
+                    connection.commit()
                     if res:
                         return {'id': res[0], 'numero_pagina': res[1]}
                     return None
@@ -378,6 +387,7 @@ class DBManager:
                     print(
                         f"[🔄] Reset de Erros: {linhas_afetadas} páginas voltaram para a fila de processamento."
                     )
+                return linhas_afetadas
         except Exception as e:
             print(f"[-] Erro ao resetar páginas falhadas: {e}")
             return 0

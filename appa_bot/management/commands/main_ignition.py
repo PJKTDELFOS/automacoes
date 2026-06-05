@@ -7,8 +7,7 @@ from engine_busca_pncp.coletor_central import ColetorCentral
 from engine_busca_pncp.db_manager import DBManager
 from engine_busca_pncp.email_manager import EmailManager
 import requests
-from datetime import datetime, timedelta
-from engine_busca_pncp.propriedades import Properties
+
 
 
 class Command(BaseCommand):
@@ -21,6 +20,7 @@ class Command(BaseCommand):
         self.stdout.write(
             "Limpando pasta temporária de planilhas..."
         )
+        link_db=None
         try:
             Cleardirectory()
             self.stdout.write("Conectando ao Banco de Dados Central...")
@@ -151,7 +151,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("\n=== Processo Finalizado com Sucesso! ==="))
         finally:
             self.stdout.write("Limpando planilhas temporárias pós-envio...")
+
             Cleardirectory()
+            link_db.close_()
 
 
 
