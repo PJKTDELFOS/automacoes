@@ -51,7 +51,7 @@ class DBManager:
                     CREATE TABLE IF NOT EXISTS public.pncp_dados_brutos (
                         id SERIAL PRIMARY KEY,
                         data_coleta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        identificador_certame VARCHAR(255) UNIQUE,
+                        identificador_certame VARCHAR(255) UNIQUE, -- A trava de ouro que impede duplicados
                         uf VARCHAR(2),
                         objeto TEXT,
                         dados_json JSONB
