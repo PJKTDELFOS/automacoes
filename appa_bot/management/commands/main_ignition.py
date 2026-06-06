@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from appa_bot.repository import ClienteRepository
 import time
+from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 from clear_dir import Cleardirectory
 from clientes.clientes import MonitorClientes
 from engine_busca_pncp.coletor_central import ColetorCentral
@@ -88,9 +89,17 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.ERROR(
                         "\n[!] A coleta falhou após retentativa. Abortando envio para garantir integridade."))
                     return
-            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-                print(f"[!] Erro de conexão na página : {e}")
+            except SessionNotCreatedException as e:
+                self.stdout.write(self.style.ERROR(
+                    f"[!] ChromeDriver falhou ao iniciar sessão: {e}"
+                ))
                 return
+            except WebDriverException as e:
+                self.stdout.write(self.style.ERROR(
+                    f"[!] Erro de conexão no Selenium: {e}"
+                ))
+                return
+
 
 
 
@@ -137,8 +146,13 @@ class Command(BaseCommand):
                             uf=stakeholder['uf'],
                             anexo_path=caminho_planilha
                         )
+
                         if sucesso:
                             for id_hash in ids_encontrados:
+                                # Registros em loop intencional: falha parcial é tolerada.
+                                # Na próxima execução o cliente recebe os itens não registrados
+                                # junto do dia corrente. Janela máxima de atraso: 1 dia em 15.
+                                # DEPENDE do ON CONFLICT DO NOTHING em registro_envio para idempotência.
                                 link_db.registro_envio(id_hash,stakeholder['nome'])
                             self.stdout.write(self.style.SUCCESS("  -> Status salvo no histórico com sucesso."))
                         else:
@@ -153,7 +167,8 @@ class Command(BaseCommand):
             self.stdout.write("Limpando planilhas temporárias pós-envio...")
 
             Cleardirectory()
-            link_db.close_()
+            if link_db:
+                link_db.close_()
 
 
 

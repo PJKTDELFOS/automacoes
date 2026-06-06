@@ -60,7 +60,10 @@ class ColetorCentral:
 
         # Gerencia e baixa automaticamente a versão correta do ChromeDriver
         service = Service(ChromeDriverManager().install())
-        return webdriver.Chrome(service=service, options=options)
+        driver=webdriver.Chrome(service=service, options=options)
+        driver.set_page_load_timeout(30)
+        driver.set_script_timeout(30)
+        return driver
 
     def coleta_diaria(self):
         """Orquestrador principal do ciclo diário de raspagem de dados."""
@@ -143,7 +146,10 @@ class ColetorCentral:
 
                 # Aguarda a conclusão de todos os que foram ativados
                 for future in as_completed(futures):
-                    future.result()
+                    try:
+                        future.result(timeout=120)
+                    except TimeoutError as e:
+                        print(f"[-] Worker excedeu 120s — será reprocessado na repescagem.")
 
             # --- ETAPA 4: Rodadas de Repescagem de Erros (Corrigido contador de rodadas e adicionado delay) ---
             pendentes = True
@@ -172,7 +178,10 @@ class ColetorCentral:
                         time.sleep(INTERVALO_ENTRE_WORKERS)
 
                     for future in as_completed(futures_retentar):
-                        future.result()
+                        try:
+                            future.result(timeout=120)
+                        except TimeoutError as e:
+                            print(f"[-] Worker excedeu 120s — será reprocessado na repescagem.")
 
                 rodada += 1  # Incremento movido para o final do ciclo de forma correta
 
