@@ -55,8 +55,8 @@ class ColetorCentral:
         options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
 
         # Injeta as configurações do Proxy diretamente na engine do navegador
-        proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
-        options.add_argument(f'--proxy-server=http://{proxy_server}')
+        # proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
+        # options.add_argument(f'--proxy-server=http://{proxy_server}')
 
         # Gerencia e baixa automaticamente a versão correta do ChromeDriver
         service = Service(ChromeDriverManager().install())
