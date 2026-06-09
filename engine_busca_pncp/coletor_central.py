@@ -55,8 +55,8 @@ class ColetorCentral:
         options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
 
         # Injeta as configurações do Proxy diretamente na engine do navegador
-        # proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
-        # options.add_argument(f'--proxy-server=http://{proxy_server}')
+        proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
+        options.add_argument(f'--proxy-server=http://{proxy_server}')
 
         # Gerencia e baixa automaticamente a versão correta do ChromeDriver
         service = Service(ChromeDriverManager().install())
@@ -202,7 +202,7 @@ class ColetorCentral:
             print(f"[-] Erro crítico no laço principal: {e}")
             return False
 
-    def _processar_pagina(self, id_tarefa, num_pagina, data_final_api):
+    def _processar_pagina(self, id_tarefa, num_pagina:int, data_final_api):
         """Worker das Threads: Abre um navegador próprio, resolve os cookies do WAF e persiste dados."""
         # MUDANÇA DE OURO: Adicionado &ordenacao=asc também nas requisições individuais das threads
         url_completa = f"{self.endpoint}?dataFinal={data_final_api}&pagina={num_pagina}&tamanhoPagina=50&ordenacao=asc"
@@ -228,6 +228,12 @@ class ColetorCentral:
                     time.sleep(4)
                     continue
 
+                if not conteudo_tela.startswith('{'):
+                    print(f'fim da paginaçao real na {num_pagina}')
+                    driver.quit()
+                    self.db.atualizar_status_tarefa_PNCP(id_tarefa,'CONCLUIDO',204)
+                    return 0
+
                 # Transforma o texto extraído da tela em dicionário estruturado
                 try:
                     dados = json.loads(conteudo_tela)
@@ -240,6 +246,8 @@ class ColetorCentral:
                     continue
 
                 items = dados.get('data', [])
+                num_items_recebidos=len(items)
+
                 novos_pagina = 0
 
                 for item in items:
@@ -255,6 +263,8 @@ class ColetorCentral:
 
                 print(
                     f"[✓] Página {num_pagina} concluída via Selenium — {novos_pagina} novos | Total Geral: {self._total_novos}")
+
+
                 driver.quit()  # Fecha e mata o processo do Chrome da memória
                 return novos_pagina
 
