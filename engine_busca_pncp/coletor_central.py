@@ -50,10 +50,14 @@ class ColetorCentral:
         options = Options()
         options.add_argument("--headless=new")  # Força modo invisível dentro do Docker Linux
         options.add_argument("--no-sandbox")
+        options.add_argument("--disable-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
         options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
-
+        options.add_argument("--disable-software-rasterizer")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-notifications")
         # Injeta as configurações do Proxy diretamente na engine do navegador
         proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
         options.add_argument(f'--proxy-server=http://{proxy_server}')
@@ -61,8 +65,8 @@ class ColetorCentral:
         # Gerencia e baixa automaticamente a versão correta do ChromeDriver
         service = Service(ChromeDriverManager().install())
         driver=webdriver.Chrome(service=service, options=options)
-        driver.set_page_load_timeout(30)
-        driver.set_script_timeout(30)
+        driver.set_page_load_timeout(60)
+        driver.set_script_timeout(60)
         return driver
 
     def coleta_diaria(self):
