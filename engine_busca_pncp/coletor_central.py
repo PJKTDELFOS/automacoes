@@ -50,8 +50,7 @@ class ColetorCentral:
         options = Options()
         options.add_argument("--headless=new")  # Força modo invisível dentro do Docker Linux
         options.add_argument("--no-sandbox")
-        options.add_argument("--disable-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-setuid-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
         options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
