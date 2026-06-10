@@ -28,7 +28,7 @@ class ColetorCentral:
         # Contador thread-safe de novos registros salvos
         self._total_novos = 0
         self._counter_lock = threading.Lock()
-        self._chrome_service = Service(ChromeDriverManager().install())
+        self._driver_path = ChromeDriverManager().install()
 
     def get_certame_hash(self, item):
         """Gera um ID único estável baseado nos metadados do certame."""
@@ -65,7 +65,8 @@ class ColetorCentral:
             options.add_argument(f'--proxy-server=http://{proxy_server}')
 
             # Gerencia e baixa automaticamente a versão correta do ChromeDriver
-            driver = webdriver.Chrome(service=self._chrome_service, options=options)
+            thread_service = Service(executable_path=self._driver_path)
+            driver = webdriver.Chrome(service=thread_service, options=options)
             driver.set_page_load_timeout(60)
             driver.set_script_timeout(60)
             return driver
