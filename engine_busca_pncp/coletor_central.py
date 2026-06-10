@@ -60,9 +60,12 @@ class ColetorCentral:
             options.add_argument("--disable-gpu")
 
             # 🌟 AS TRÊS FLAGS CORRETIVAS PARA O TIMEOUT NEGATIVO:
-            options.add_argument("--disable-software-rasterizer")  # Impede o overhead gráfico virtual
-            options.add_argument("--single-process")  # Força o Chrome a rodar no mesmo espaço de execução
-            options.add_argument("--remote-debugging-pipe")  # Melhora a estabilidade de comunicação interna no Linux
+            options.add_argument("--disable-software-rasterizer")  # Desativa emulação 3D virtual
+            options.add_argument("--remote-debugging-pipe")  # Estabiliza o canal via pipe no Linux
+            options.add_argument(
+                "--disable-features=DBus,PreloadMediaEngine,GpuProcessHighPriority")  # Corta hooks gráficos do SO
+            options.add_argument("--user-data-dir=/tmp/chrome_user_data_" + str(
+                random.randint(1000, 9999)))  # Isola o cache de disco por thread
 
             # Otimizações de velocidade
             options.add_argument("--blink-settings=imagesEnabled=false")
