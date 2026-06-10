@@ -59,6 +59,7 @@ try:
 
 except Exception as e:
     print(f"\n[-] Erro durante a execução do teste com Selenium: {e}")
+    print(e.args,e.__dict__)
 
 finally:
     # Garante que o processo do Chrome na memória seja fechado
