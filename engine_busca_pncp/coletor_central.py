@@ -51,27 +51,37 @@ class ColetorCentral:
             print('iniciando driver...')
             """Instancia um navegador Chrome invisível isolado e configurado com o Proxy da Webshare."""
             options = Options()
-            options.add_argument("--headless=new")  # Força modo invisível dentro do Docker Linux
+
+            # Flags fundamentais para evitar o congelamento do Renderer dentro do Docker
+            options.add_argument("--headless=new")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-setuid-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-dev-shm-usage")  # Força o uso da RAM normal em vez do SHM limitado
             options.add_argument("--disable-gpu")
-            options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
-            options.add_argument("--disable-software-rasterizer")
+
+            # 🌟 AS TRÊS FLAGS CORRETIVAS PARA O TIMEOUT NEGATIVO:
+            options.add_argument("--disable-software-rasterizer")  # Impede o overhead gráfico virtual
+            options.add_argument("--single-process")  # Força o Chrome a rodar no mesmo espaço de execução
+            options.add_argument("--remote-debugging-pipe")  # Melhora a estabilidade de comunicação interna no Linux
+
+            # Otimizações de velocidade
+            options.add_argument("--blink-settings=imagesEnabled=false")
             options.add_argument("--disable-extensions")
             options.add_argument("--disable-notifications")
+
             # Injeta as configurações do Proxy diretamente na engine do navegador
             proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
             options.add_argument(f'--proxy-server=http://{proxy_server}')
 
-            # Gerencia e baixa automaticamente a versão correta do ChromeDriver
-            thread_service = Service(executable_path=self._driver_path)
-            driver = webdriver.Chrome(service=thread_service, options=options)
-            driver.set_page_load_timeout(60)
-            driver.set_script_timeout(60)
+            # Cria o driver usando o barramento configurado
+            tread_service=Service(executable_path=self._driver_path)
+            driver = webdriver.Chrome(service=tread_service, options=options)
+            driver.set_page_load_timeout(30)
+            driver.set_script_timeout(30)
             return driver
+
         except Exception as e:
-            print( e.args ,'argumentos')
+            print(e.args, 'argumentos')
             print(e.__dict__)
             print('falha no webdriver')
             raise
@@ -171,7 +181,7 @@ class ColetorCentral:
                     try:
                         future.result(timeout=180)
                     except TimeoutError as e:
-                        print(f"[-] Worker excedeu 120s — será reprocessado na repescagem.")
+                        print(f"[-] Worker excedeu 120s — será reprocessado na repescagem {e}.")
 
             # --- ETAPA 4: Rodadas de Repescagem de Erros (Corrigido contador de rodadas e adicionado delay) ---
             pendentes = True
@@ -203,7 +213,7 @@ class ColetorCentral:
                         try:
                             future.result(timeout=180)
                         except TimeoutError as e:
-                            print(f"[-] Worker excedeu 120s — será reprocessado na repescagem.")
+                            print(f"[-] Worker excedeu 120s — será reprocessado na repescagem {e}.")
 
                 rodada += 1  # Incremento movido para o final do ciclo de forma correta
 
