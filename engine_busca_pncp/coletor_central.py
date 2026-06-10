@@ -46,27 +46,33 @@ class ColetorCentral:
         return hashlib.md5(string_chave.encode('utf-8')).hexdigest()
 
     def _criar_driver_headless(self):
-        """Instancia um navegador Chrome invisível isolado e configurado com o Proxy da Webshare."""
-        options = Options()
-        options.add_argument("--headless=new")  # Força modo invisível dentro do Docker Linux
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-setuid-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
-        options.add_argument("--disable-software-rasterizer")
-        options.add_argument("--disable-extensions")
-        options.add_argument("--disable-notifications")
-        # Injeta as configurações do Proxy diretamente na engine do navegador
-        # proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
-        # options.add_argument(f'--proxy-server=http://{proxy_server}')
+        try:
+            print('iniciando driver...')
+            """Instancia um navegador Chrome invisível isolado e configurado com o Proxy da Webshare."""
+            options = Options()
+            options.add_argument("--headless=new")  # Força modo invisível dentro do Docker Linux
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-setuid-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--blink-settings=imagesEnabled=false")  # Ganha muita velocidade desativando imagens
+            options.add_argument("--disable-software-rasterizer")
+            options.add_argument("--disable-extensions")
+            options.add_argument("--disable-notifications")
+            # Injeta as configurações do Proxy diretamente na engine do navegador
+            # proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
+            # options.add_argument(f'--proxy-server=http://{proxy_server}')
 
-        # Gerencia e baixa automaticamente a versão correta do ChromeDriver
-        service = Service(ChromeDriverManager().install())
-        driver=webdriver.Chrome(service=service, options=options)
-        driver.set_page_load_timeout(60)
-        driver.set_script_timeout(60)
-        return driver
+            # Gerencia e baixa automaticamente a versão correta do ChromeDriver
+            service = Service(ChromeDriverManager().install())
+            driver=webdriver.Chrome(service=service, options=options)
+            driver.set_page_load_timeout(60)
+            driver.set_script_timeout(60)
+            return driver
+        except Exception as e:
+            print( e.args ,'argumentos')
+            print(e.__dict__)
+            print('falha no webdriver')
 
     def coleta_diaria(self):
         """Orquestrador principal do ciclo diário de raspagem de dados."""
