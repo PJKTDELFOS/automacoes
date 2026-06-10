@@ -60,8 +60,8 @@ class ColetorCentral:
             options.add_argument("--disable-extensions")
             options.add_argument("--disable-notifications")
             # Injeta as configurações do Proxy diretamente na engine do navegador
-            # proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
-            # options.add_argument(f'--proxy-server=http://{proxy_server}')
+            proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
+            options.add_argument(f'--proxy-server=http://{proxy_server}')
 
             # Gerencia e baixa automaticamente a versão correta do ChromeDriver
             service = Service(ChromeDriverManager().install())
@@ -118,11 +118,13 @@ class ColetorCentral:
 
         except Exception as e_mapeamento:
             print(f"[-] Falha catastrófica no mapeamento inicial: {e_mapeamento}")
+            print(e_mapeamento.args)
+            print(e_mapeamento.__dict__)
             if driver is not None:
                 try:
                     driver.quit()
                 except Exception as e:
-                    print(f' falhando no mapeamento: {e}')
+                    print(f' falhando no mapeamento: {e},')
                     pass
             return False
 
