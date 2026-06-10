@@ -113,12 +113,6 @@ class ColetorCentral:
                 return False
 
 
-
-            if "request rejected" in conteudo_bruto.lower() or "<html" in conteudo_bruto.lower():
-                print("[-] O PNCP rejeitou a requisição inicial de mapeamento via Navegador.")
-                driver.quit()
-                return False
-
             dados = json.loads(conteudo_bruto)
             total_paginas = dados.get('totalPaginas', 0)
             print(f"[+] Mapeamento concluído: {total_paginas} páginas identificadas.")
@@ -174,7 +168,7 @@ class ColetorCentral:
                 # Aguarda a conclusão de todos os que foram ativados
                 for future in as_completed(futures):
                     try:
-                        future.result(timeout=120)
+                        future.result(timeout=180)
                     except TimeoutError as e:
                         print(f"[-] Worker excedeu 120s — será reprocessado na repescagem.")
 
@@ -206,7 +200,7 @@ class ColetorCentral:
 
                     for future in as_completed(futures_retentar):
                         try:
-                            future.result(timeout=120)
+                            future.result(timeout=180)
                         except TimeoutError as e:
                             print(f"[-] Worker excedeu 120s — será reprocessado na repescagem.")
 
@@ -256,10 +250,17 @@ class ColetorCentral:
                     continue
 
                 if not conteudo_tela.startswith('{'):
-                    print(f'fim da paginaçao real na {num_pagina}')
-                    driver.quit()
-                    self.db.atualizar_status_tarefa_PNCP(id_tarefa,'CONCLUIDO',204)
-                    return 0
+                    if 'erro na comunicação' in conteudo_tela.lower():
+                        print(f'fim da paginaçao real na {num_pagina}')
+                        driver.quit()
+                        self.db.atualizar_status_tarefa_PNCP(id_tarefa,'CONCLUIDO',204)
+                        return 0
+                    else:
+                        print(f"[-] Erro de banco local detectado na página {num_pagina}. Retentando...")
+                        driver.quit()
+                        time.sleep(5)
+                        continue
+
 
                 # Transforma o texto extraído da tela em dicionário estruturado
                 try:
