@@ -73,6 +73,7 @@ class ColetorCentral:
             print( e.args ,'argumentos')
             print(e.__dict__)
             print('falha no webdriver')
+            raise
 
     def coleta_diaria(self):
         """Orquestrador principal do ciclo diário de raspagem de dados."""
