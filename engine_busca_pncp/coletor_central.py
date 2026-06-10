@@ -97,7 +97,22 @@ class ColetorCentral:
             time.sleep(4)  # Janela de tempo pro WAF processar o Javascript e cookies iniciais
 
             # Quando o Chrome acessa um JSON, ele renderiza o texto puro dentro da tag body
-            conteudo_bruto = driver.find_element("tag name", "body").text
+            conteudo_bruto = driver.find_element("tag name", "body").text.strip()
+
+            if (
+                not conteudo_bruto.startswith('{') or
+                'request rejected' in conteudo_bruto.lower() or
+                'erro na comunicação' in conteudo_bruto.lower()or
+                'time-out' in conteudo_bruto.lower()
+                ):
+                print(
+                    f"[-] O PNCP ou o Banco Local rejeitaram o mapeamento inicial. Resposta: {conteudo_bruto[:60]}"
+                )
+                if driver is not None:
+                    driver.quit()
+                return False
+
+
 
             if "request rejected" in conteudo_bruto.lower() or "<html" in conteudo_bruto.lower():
                 print("[-] O PNCP rejeitou a requisição inicial de mapeamento via Navegador.")
