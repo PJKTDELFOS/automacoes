@@ -4,6 +4,7 @@ services:
   web:
     build: .
     container_name: appa_web
+    shm_size: '2gb'
     restart: always  # Se o servidor da Hostinger reiniciar sozinho, ele liga o seu site de volta automaticamente
     env_file:
       - .env         # Puxa as suas senhas do banco e a SECRET_KEY com segurança
