@@ -46,8 +46,9 @@ def worker_estresse(num_pagina):
         print(f"[✓] [Página {num_pagina}]  SUCESSO! Capturados {len(dados.get('data', []))} itens ({duration:.2f}s)")
         return num_pagina, "SUCCESS"
 
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e_erro_json:
         print(f"[-] [Página {num_pagina}] ⚠️ DADO CORROMPIDO (JSONDecodeError - Extra data ou Vazio)")
+        print(f" erro: {e_erro_json}")
         return num_pagina, "JSON_ERROR"
     except Exception as e:
         print(f"[-] [Página {num_pagina}] 💥 ERRO CRÍTICO NA THREAD: {e}")

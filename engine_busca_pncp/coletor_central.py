@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 import time
 import random
+import os
 
 # Novos imports essenciais para a Engine de Navegador
 from selenium import webdriver
@@ -48,7 +49,7 @@ class ColetorCentral:
 
     def _criar_driver_headless(self):
         try:
-            print('iniciando driver...')
+
             """Instancia um navegador Chrome invisível isolado e configurado com o Proxy da Webshare."""
             options = Options()
 
@@ -64,8 +65,9 @@ class ColetorCentral:
             options.add_argument("--remote-debugging-pipe")  # Estabiliza o canal via pipe no Linux
             options.add_argument(
                 "--disable-features=DBus,PreloadMediaEngine,GpuProcessHighPriority")  # Corta hooks gráficos do SO
-            options.add_argument("--user-data-dir=/tmp/chrome_user_data_" + str(
-                random.randint(1000, 9999)))  # Isola o cache de disco por thread
+            options.add_argument(
+                f"--user-data-dir=/tmp/chrome_user_data_{threading.get_ident()}_{random.randint(1000, 9999)}"
+            )  # Isola o cache de disco por thread
 
             # Otimizações de velocidade
             options.add_argument("--blink-settings=imagesEnabled=false")
@@ -73,7 +75,9 @@ class ColetorCentral:
             options.add_argument("--disable-notifications")
 
             # Injeta as configurações do Proxy diretamente na engine do navegador
-            proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}"
+            # proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}" #caso volte autenticaçao
+            # options.add_argument(f'--proxy-server=http://{proxy_server}')
+            proxy_server = f"{Config.PROXY_HOST}:{Config.PROXY_PORT}" #para aut via WhiteList
             options.add_argument(f'--proxy-server=http://{proxy_server}')
 
             # Cria o driver usando o barramento configurado
@@ -81,6 +85,8 @@ class ColetorCentral:
             driver = webdriver.Chrome(service=tread_service, options=options)
             driver.set_page_load_timeout(30)
             driver.set_script_timeout(30)
+            print(
+                f'iniciando driver... thread={threading.get_ident()} pid={os.getpid()} t={datetime.now().strftime("%H:%M:%S.%f")}')
             return driver
 
         except Exception as e:
@@ -182,7 +188,7 @@ class ColetorCentral:
                 # Aguarda a conclusão de todos os que foram ativados
                 for future in as_completed(futures):
                     try:
-                        future.result(timeout=180)
+                        future.result()
                     except TimeoutError as e:
                         print(f"[-] Worker excedeu 120s — será reprocessado na repescagem {e}.")
 
@@ -214,7 +220,7 @@ class ColetorCentral:
 
                     for future in as_completed(futures_retentar):
                         try:
-                            future.result(timeout=180)
+                            future.result()
                         except TimeoutError as e:
                             print(f"[-] Worker excedeu 120s — será reprocessado na repescagem {e}.")
 
@@ -271,9 +277,12 @@ class ColetorCentral:
                         return 0
                     else:
                         print(f"[-] Erro de banco local detectado na página {num_pagina}. Retentando...")
+                        print(conteudo_tela)
                         driver.quit()
                         time.sleep(5)
-                        continue
+                        self.db.atualizar_status_tarefa_PNCP(id_tarefa, 'CONCLUIDO', 204)
+                        return 0
+
 
 
                 # Transforma o texto extraído da tela em dicionário estruturado
