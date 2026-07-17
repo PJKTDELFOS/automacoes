@@ -47,44 +47,7 @@ def envios():
 
     lista_de_clientes = [
 
-        {
-            'classe': MonitorClientes,
-            'nome': 'Nova Rodovia 2007',
-            'email': ['comercial@nrgourmet.com.br', 'Gerencia@nrgourmet.com.br'],
-            'palavras': [
-                'refeicao', 'alimentacao', 'catering', 'cafe', 'almoco', 'ceia', 'colacao', 'lanche', 'janta',
-                'cozinha','copeiragem', 'apoio', 'formula', 'hipo', 'proteina', 'terceirizacao', 'cozinheiro', 'cozinheira',
-                'generos', 'alimenticios', 'cafe da manha','desjejum', 'almoço', 'janta', 'cozinheiros', 'lipo',
-                'generos alimenticios', 'pao', 'paes', 'pão','pães', 'ovos', 'lacteos', 'laticinios', 'comida',
-                'alimentos', 'quentinha', 'marmita', 'marmitex', 'preparaçao de alimentos', 'refeições prontas',
-                'preparação de refeições'
-            ],
-            'palavras_exclusao':['engenharia',],
-            'uf': REGIOES['SUDESTE'][2],  # RJ
-            'metodo': 'resend'
-        },
-        {
-            'classe': MonitorClientes,
-            'nome': 'Albert Pimentel',
-            'email': ['albert.franca1992@gmail.com'],
-            'palavras': [
-                'site', 'sistema', 'pagina web', 'TIC', 'informatica', 'tecnologia da informacao', 'web', 'dados',
-                'chiller','ar-condicionado','climatização','manutenção ar-condicionado',
-            ],
-            'uf': REGIOES['SUDESTE'][2],  # RJ
-            'metodo': 'resend'
-        },
-        {
-            'classe': MonitorClientes,
-            'nome': 'Cliente Teste 1',
-            'email': ['orofissional.albert@gmail.com'],
-            'palavras': [
-                'chiller','ar-condicionado','climatização','manutenção ar-condicionado','refrigeração','climatizar',
 
-            ],
-            'uf': [],  # RJ
-            'metodo': 'resend'
-        }
 
 
     ]

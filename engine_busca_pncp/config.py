@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv(encoding="cp1252")
+load_dotenv(encoding="UTF-8")
 
 
 def _require(key:str)->str:

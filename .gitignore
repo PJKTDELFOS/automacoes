@@ -6,6 +6,8 @@ __pycache__
 db.sqlite3
 static/
 media/
+.junie
+.venv
 posvendas/local_settiings.py
 obs.txt
 PROCESSOS.txt
