@@ -114,7 +114,8 @@ class ColetorCentral:
             # MUDANÇA DE OURO: Adicionado &ordenacao=asc para fixar a ordem das páginas iniciais
             url_mapeamento = f"{self.endpoint}?dataFinal={data_final_api}&pagina=1&tamanhoPagina=50&ordenacao=asc"
             driver.get(url_mapeamento)
-            time.sleep(4)  # Janela de tempo pro WAF processar o Javascript e cookies iniciais
+
+            time.sleep(10)  # Janela de tempo pro WAF processar o Javascript e cookies iniciais
 
             # Quando o Chrome acessa um JSON, ele renderiza o texto puro dentro da tag body
             conteudo_bruto = driver.find_element("tag name", "body").text.strip()
@@ -128,6 +129,7 @@ class ColetorCentral:
                 print(
                     f"[-] O PNCP ou o Banco Local rejeitaram o mapeamento inicial. Resposta: {conteudo_bruto[:60]}"
                 )
+
                 if driver is not None:
                     driver.quit()
                 return False
@@ -173,7 +175,7 @@ class ColetorCentral:
 
             # --- ETAPA 3: Disparar os Workers paralelos no ThreadPoolExecutor com espaçamento ---
             print(f"[*] Processando {len(tarefas)} páginas com {self.max_workers} threads...")
-            INTERVALO_ENTRE_WORKERS = 2  # Respiro em segundos para suavizar o consumo e o WAF
+            INTERVALO_ENTRE_WORKERS = 5  # Respiro em segundos para suavizar o consumo e o WAF
 
             futures = {}
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
