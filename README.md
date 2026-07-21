@@ -169,15 +169,7 @@ automation.
 
 # Documentation
 
-The repository includes additional technical documentation covering:
-
--   ETL architecture
--   WAF investigation
--   Infrastructure
--   Deployment
--   Performance
--   Testing strategy
--   Design decisions
+Additional technical documentation is available upon request and covers:
 
 ------------------------------------------------------------------------
 
