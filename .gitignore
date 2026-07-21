@@ -8,6 +8,7 @@ static/
 media/
 .junie
 .venv
+diversos
 posvendas/local_settiings.py
 obs.txt
 PROCESSOS.txt
