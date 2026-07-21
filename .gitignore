@@ -9,6 +9,7 @@ media/
 .junie
 .venv
 diversos
+.idea
 posvendas/local_settiings.py
 obs.txt
 PROCESSOS.txt
