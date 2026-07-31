@@ -83,7 +83,7 @@ class ColetorCentral:
             # Cria o driver usando o barramento configurado
             tread_service=Service(executable_path=self._driver_path)
             driver = webdriver.Chrome(service=tread_service, options=options)
-            driver.set_page_load_timeout(30)
+            driver.set_page_load_timeout(90)
             driver.set_script_timeout(30)
             print(
                 f'iniciando driver... thread={threading.get_ident()} pid={os.getpid()} t={datetime.now().strftime("%H:%M:%S.%f")}')
