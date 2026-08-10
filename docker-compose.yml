@@ -22,5 +22,6 @@ services:
     # colocar isso em produção, para o Docker conseguir enxergar o seu banco.
     volumes:
       - ./base_static:/app/base_static
+      - ./static:/app/static
       - ./media:/app/media
     network_mode: "host"
