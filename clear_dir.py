@@ -1,9 +1,7 @@
 import shutil
 import os
 from engine_busca_pncp.propriedades import Properties
-'''
-testes
-'''
+
 
 def Cleardirectory():
     dir=Properties.TEMP_FOLDER
