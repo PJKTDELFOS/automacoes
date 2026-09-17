@@ -13,8 +13,8 @@ services:
     restart: always  # Se o servidor da Hostinger reiniciar sozinho, ele liga o seu site de volta automaticamente
     env_file:
       - .env         # Puxa as suas senhas do banco e a SECRET_KEY com segurança
-    ports:
-      - "8000:8000"  # Libera a porta 8000 para podermos acessar o site
+    #ports:
+    #  - "8000:8000"  # Libera a porta 8000 para podermos acessar o site
 
     # ATENÇÃO PARA A VPS:
     # Como o seu PostgreSQL já está rodando direto no Linux e não dentro do Docker,
@@ -23,5 +23,5 @@ services:
     volumes:
       - ./base_static:/app/base_static
       - ./static:/app/static
-      - ./media:/app/media
+      - ./media:/app
     network_mode: "host"
