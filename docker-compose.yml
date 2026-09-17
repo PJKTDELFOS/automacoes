@@ -23,5 +23,5 @@ services:
     volumes:
       - ./base_static:/app/base_static
       - ./static:/app/static
-      - ./media:/app
+      - ./media:/app/media
     network_mode: "host"
