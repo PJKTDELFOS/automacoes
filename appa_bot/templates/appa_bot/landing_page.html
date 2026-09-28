@@ -1,20 +1,166 @@
 {% extends "base.html" %}
 
-
-{%block content%}
+{% block content %}
 
 <style>
-    .form-container p {
+    /* Container Principal */
+    .form-container {
+        max-width: 760px;
+        margin: 40px auto;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        box-sizing: border-box;
+    }
+
+    .form-container h2 {
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    /* Mensagens de Feedback */
+    .message {
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        font-size: 0.95rem;
+    }
+    .message.success { background-color: rgba(25, 135, 84, 0.2); border: 1px solid #198754; color: #75b798; }
+    .message.error { background-color: rgba(220, 53, 69, 0.2); border: 1px solid #dc3545; color: #ea868f; }
+
+    /* Estrutura do form.as_p */
+    .formulario-simples p {
         display: flex;
         flex-direction: column;
-        margin-bottom: 15px;
+        margin-bottom: 18px;
         text-align: left;
     }
-    .form-container span.helptext {
+
+    .formulario-simples label {
+        font-weight: 600;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+    }
+
+    .formulario-simples input[type="text"],
+    .formulario-simples input[type="email"],
+    .formulario-simples textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background-color: rgba(0, 0, 0, 0.2);
+        color: #fff;
+        box-sizing: border-box;
+        font-size: 0.95rem;
+    }
+
+    .formulario-simples span.helptext {
         font-size: 0.8rem;
-        color: #ccc;
-        margin-top: -10px;
-        margin-bottom: 10px;
+        color: #aaa;
+        margin-top: 4px;
+    }
+
+    /* --- GRADE DE 4 COLUNAS PARA O CAMPO UF --- */
+    #id_UF,
+    .formulario-simples #id_UF,
+    .form-container #id_UF {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px 14px !important;
+        list-style: none !important;
+        padding: 16px !important;
+        margin: 6px 0 0 0 !important;
+        background-color: rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Normalização de itens filhos (li ou div gerados pelo Django) */
+    #id_UF li,
+    #id_UF div {
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* Alinhamento do checkbox com a label */
+    #id_UF label {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        cursor: pointer !important;
+        font-size: 0.88rem !important;
+        font-weight: normal !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+        user-select: none !important;
+    }
+
+    #id_UF input[type="checkbox"] {
+        cursor: pointer !important;
+        width: 16px !important;
+        height: 16px !important;
+        margin: 0 !important;
+        accent-color: #0d6efd !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Destaque para o primeiro item (Todo o Brasil / BR) */
+    #id_UF > *:first-child label {
+        font-weight: 700 !important;
+        color: #0d6efd !important;
+    }
+
+    /* Responsividade: 2 colunas no celular */
+    @media (max-width: 680px) {
+        #id_UF,
+        .formulario-simples #id_UF,
+        .form-container #id_UF {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .form-container {
+            padding: 20px 14px;
+        }
+    }
+
+    /* Campos de Entrada: Fundo escuro com texto claro e legível */
+    .formulario-simples input[type="text"],
+    .formulario-simples input[type="email"],
+    .formulario-simples textarea,
+    .formulario-simples .form-control {
+        width: 100% !important;
+        padding: 10px 12px !important;
+        border-radius: 6px !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        background-color: #1e2430 !important; /* Fundo escuro contrastante */
+        color: #f8f9fa !important;            /* Texto branco/cinzento-claro */
+        box-sizing: border-box !important;
+        font-size: 0.95rem !important;
+    }
+
+    /* Foco ao clicar no campo */
+    .formulario-simples input[type="text"]:focus,
+    .formulario-simples input[type="email"]:focus,
+    .formulario-simples textarea:focus,
+    .formulario-simples .form-control:focus {
+        background-color: #262d3d !important;
+        color: #ffffff !important;
+        border-color: #0d6efd !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
+    }
+
+    /* Cor do texto de ajuda (Placeholder) */
+    .formulario-simples input::placeholder,
+    .formulario-simples textarea::placeholder,
+    .formulario-simples .form-control::placeholder {
+        color: #8c98a9 !important;
+        opacity: 1 !important;
     }
 </style>
 
@@ -44,5 +190,42 @@
         </button>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const brCheckbox = document.querySelector('input[name="UF"][value="BR"]');
+    const stateCheckboxes = document.querySelectorAll('input[name="UF"]:not([value="BR"])');
+
+    if (brCheckbox && stateCheckboxes.length > 0) {
+        // Ao clicar no Todo o Brasil (BR), marca ou desmarca todos os outros
+        brCheckbox.addEventListener('change', function () {
+            const isChecked = this.checked;
+            stateCheckboxes.forEach(cb => {
+                cb.checked = isChecked;
+            });
+        });
+
+        // Monitora cada estado individual
+        stateCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function () {
+                if (!this.checked) {
+                    // Se desmarcou ao menos um estado, desmarca a opção 'BR'
+                    brCheckbox.checked = false;
+                } else {
+                    // Se marcou todos os estados manualmente, marca a opção 'BR'
+                    const allChecked = Array.from(stateCheckboxes).every(input => input.checked);
+                    brCheckbox.checked = allChecked;
+                }
+            });
+        });
+
+        // Sincroniza o estado inicial do checkbox BR no carregamento da tela
+        const allInitiallyChecked = Array.from(stateCheckboxes).every(input => input.checked);
+        if (allInitiallyChecked) {
+            brCheckbox.checked = true;
+        }
+    }
+});
+</script>
 
 {% endblock %}
