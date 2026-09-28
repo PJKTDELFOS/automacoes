@@ -2,6 +2,7 @@ import shutil
 import os
 from engine_busca_pncp.propriedades import Properties
 
+
 def Cleardirectory():
     dir=Properties.TEMP_FOLDER
     if os.path.exists(dir):

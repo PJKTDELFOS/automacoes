@@ -19,6 +19,9 @@ def pagina_landing_page(request):
     print("MÉTODO DA REQUISIÇÃO:", request.method)
     if request.method == "POST":
         form = StakeholderForm(request.POST)
+        print(request.POST,'teste de irformaçoes')
+        print(form.is_bound)
+        print()
         if form.is_valid():
             try:
                 MainServices.criar_stakeholders(form)
