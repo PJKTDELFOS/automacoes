@@ -39,6 +39,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 4. Copia os arquivos do projeto para o container
 COPY . /app/
 
+COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
-
 ENTRYPOINT ["/app/entrypoint.sh"]
